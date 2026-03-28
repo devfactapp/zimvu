@@ -1,7 +1,6 @@
 import Stripe from 'stripe'
 
-const stripe = new Stripe('sk_test_51TFYaKJaI2wugPbgkWWYACpXLTo72SdqmxTSGuq16dADr01R8Aos38qC3BIRraqjyiC7cXy0reWtLLAQkPjYLPab001cYMbWDv')
-
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 export async function POST(request) {
   try {
     const { email } = await request.json()
