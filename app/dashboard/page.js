@@ -1,13 +1,18 @@
+'use client'
+import { useRouter } from 'next/navigation'
+
 export default function Dashboard() {
+  const router = useRouter()
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Barre de navigation */}
       <nav className="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-blue-700">Zimvu</h1>
+        <h1 className="text-2xl font-bold text-blue-700 cursor-pointer" onClick={() => router.push('/dashboard')}>Zimvu</h1>
         <div className="flex items-center gap-6">
-          <span className="text-gray-600 cursor-pointer hover:text-blue-600">Tableau de bord</span>
-          <span className="text-gray-600 cursor-pointer hover:text-blue-600">Clients</span>
-          <span className="text-gray-600 cursor-pointer hover:text-blue-600">Factures</span>
+          <span onClick={() => router.push('/dashboard')} className="text-blue-600 font-semibold cursor-pointer">Tableau de bord</span>
+          <span onClick={() => router.push('/clients')} className="text-gray-600 cursor-pointer hover:text-blue-600">Clients</span>
+          <span onClick={() => router.push('/factures')} className="text-gray-600 cursor-pointer hover:text-blue-600">Factures</span>
           <span className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Mon compte</span>
         </div>
       </nav>

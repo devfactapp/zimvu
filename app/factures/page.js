@@ -1,4 +1,9 @@
+'use client'
+import { useRouter } from 'next/navigation'
+
 export default function Factures() {
+  const router = useRouter()
+
   const factures = [
     { id: 1, numero: "F-2024-001", client: "Jean Dupont", date: "01/03/2024", montant: "1 200 €", statut: "Payée" },
     { id: 2, numero: "F-2024-002", client: "Marie Martin", date: "10/03/2024", montant: "850 €", statut: "En attente" },
@@ -9,11 +14,11 @@ export default function Factures() {
     <div className="min-h-screen bg-gray-100">
       {/* Barre de navigation */}
       <nav className="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-blue-700">Zimvu</h1>
+        <h1 className="text-2xl font-bold text-blue-700 cursor-pointer" onClick={() => router.push('/dashboard')}>Zimvu</h1>
         <div className="flex items-center gap-6">
-          <span className="text-gray-600 cursor-pointer hover:text-blue-600">Tableau de bord</span>
-          <span className="text-gray-600 cursor-pointer hover:text-blue-600">Clients</span>
-          <span className="text-gray-600 cursor-pointer hover:text-blue-600">Factures</span>
+          <span onClick={() => router.push('/dashboard')} className="text-gray-600 cursor-pointer hover:text-blue-600">Tableau de bord</span>
+          <span onClick={() => router.push('/clients')} className="text-gray-600 cursor-pointer hover:text-blue-600">Clients</span>
+          <span onClick={() => router.push('/factures')} className="text-blue-600 font-semibold cursor-pointer">Factures</span>
           <span className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Mon compte</span>
         </div>
       </nav>
