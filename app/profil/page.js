@@ -7,6 +7,7 @@ export default function Profil() {
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [stats, setStats] = useState({ factures: 0, clients: 0, chiffreAffaires: 0 })
 
   useEffect(() => {
@@ -14,22 +15,32 @@ export default function Profil() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
       setUser(session.user)
-
       const { data: factures } = await supabase.from('factures').select('*')
       const { data: clients } = await supabase.from('clients').select('*')
-
       if (factures) {
         const total = factures.reduce((sum, f) => sum + Number(f.montant), 0)
-        setStats({
-          factures: factures.length,
-          clients: clients?.length || 0,
-          chiffreAffaires: total,
-        })
+        setStats({ factures: factures.length, clients: clients?.length || 0, chiffreAffaires: total })
       }
       setLoading(false)
     }
     fetchData()
   }, [])
+
+  const passerAuPro = async () => {
+    setCheckoutLoading(true)
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email }),
+      })
+      const data = await response.json()
+      if (data.url) window.location.href = data.url
+    } catch (error) {
+      console.error('Erreur:', error)
+    }
+    setCheckoutLoading(false)
+  }
 
   if (loading) return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -45,8 +56,7 @@ export default function Profil() {
           <span onClick={() => router.push('/dashboard')} className="text-gray-600 cursor-pointer hover:text-blue-600">Tableau de bord</span>
           <span onClick={() => router.push('/clients')} className="text-gray-600 cursor-pointer hover:text-blue-600">Clients</span>
           <span onClick={() => router.push('/factures')} className="text-gray-600 cursor-pointer hover:text-blue-600">Factures</span>
-          <button
-            onClick={async () => { await supabase.auth.signOut(); router.push('/') }}
+          <button onClick={async () => { await supabase.auth.signOut(); router.push('/') }}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm">
             Déconnexion
           </button>
@@ -56,7 +66,6 @@ export default function Profil() {
       <div className="max-w-3xl mx-auto px-6 py-8">
         <h2 className="text-xl font-semibold text-gray-700 mb-6">Mon profil</h2>
 
-        {/* Infos compte */}
         <div className="bg-white rounded-2xl shadow p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">Informations du compte</h3>
           <div className="flex items-center gap-4 mb-4">
@@ -70,7 +79,6 @@ export default function Profil() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-2xl shadow p-6 text-center">
             <p className="text-3xl font-bold text-blue-700">{stats.factures}</p>
@@ -86,7 +94,6 @@ export default function Profil() {
           </div>
         </div>
 
-        {/* Abonnement */}
         <div className="bg-white rounded-2xl shadow p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">Mon abonnement</h3>
           <div className="flex items-center justify-between">
@@ -94,13 +101,15 @@ export default function Profil() {
               <p className="font-semibold text-gray-800">Plan Gratuit</p>
               <p className="text-gray-400 text-sm">Passez au plan Pro pour débloquer toutes les fonctionnalités</p>
             </div>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-              Passer au Pro — 4,99€/mois
+            <button
+              onClick={passerAuPro}
+              disabled={checkoutLoading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+              {checkoutLoading ? 'Chargement...' : 'Passer au Pro — 4,99€/mois'}
             </button>
           </div>
         </div>
 
-        {/* Danger zone */}
         <div className="bg-white rounded-2xl shadow p-6 border border-red-100">
           <h3 className="text-lg font-semibold text-red-600 mb-4">Zone de danger</h3>
           <button
