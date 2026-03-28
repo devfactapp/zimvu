@@ -60,11 +60,12 @@ export default function Dashboard() {
           <span onClick={() => router.push('/dashboard')} className="text-blue-600 font-semibold cursor-pointer">Tableau de bord</span>
           <span onClick={() => router.push('/clients')} className="text-gray-600 cursor-pointer hover:text-blue-600">Clients</span>
           <span onClick={() => router.push('/factures')} className="text-gray-600 cursor-pointer hover:text-blue-600">Factures</span>
-          <button
-            onClick={async () => { await supabase.auth.signOut(); router.push('/') }}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm">
-            Déconnexion
-          </button>
+        <span onClick={() => router.push('/profil')} className="text-gray-600 cursor-pointer hover:text-blue-600">Mon profil</span>
+<button
+  onClick={async () => { await supabase.auth.signOut(); router.push('/') }}
+  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm">
+  Déconnexion
+</button>
         </div>
       </nav>
 
