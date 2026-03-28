@@ -7,18 +7,37 @@ export default function Dashboard() {
   const router = useRouter()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    chiffreAffaires: 0,
+    facturesEnvoyees: 0,
+    facturesEnAttente: 0,
+  })
+  const [dernieresFactures, setDernieresFactures] = useState([])
 
   useEffect(() => {
-    const checkUser = async () => {
+    const fetchData = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        router.push('/')
-      } else {
-        setUser(session.user)
+      if (!session) { router.push('/'); return }
+      setUser(session.user)
+
+      const { data: factures } = await supabase
+        .from('factures')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (factures) {
+        const total = factures.reduce((sum, f) => sum + Number(f.montant), 0)
+        const enAttente = factures.filter(f => f.statut === 'En attente').length
+        setStats({
+          chiffreAffaires: total,
+          facturesEnvoyees: factures.length,
+          facturesEnAttente: enAttente,
+        })
+        setDernieresFactures(factures.slice(0, 3))
       }
       setLoading(false)
     }
-    checkUser()
+    fetchData()
   }, [])
 
   if (loading) return (
@@ -37,8 +56,7 @@ export default function Dashboard() {
           <span onClick={() => router.push('/factures')} className="text-gray-600 cursor-pointer hover:text-blue-600">Factures</span>
           <button
             onClick={async () => { await supabase.auth.signOut(); router.push('/') }}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm"
-          >
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm">
             Déconnexion
           </button>
         </div>
@@ -49,27 +67,51 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow p-6">
-            <p className="text-gray-500 text-sm">Chiffre d'affaires du mois</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">0 €</p>
+            <p className="text-gray-500 text-sm">Chiffre d'affaires total</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">{stats.chiffreAffaires} €</p>
           </div>
           <div className="bg-white rounded-2xl shadow p-6">
             <p className="text-gray-500 text-sm">Factures envoyées</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">0</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">{stats.facturesEnvoyees}</p>
           </div>
           <div className="bg-white rounded-2xl shadow p-6">
             <p className="text-gray-500 text-sm">Factures en attente</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">0</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">{stats.facturesEnAttente}</p>
           </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">Dernières factures</h3>
-          <p className="text-gray-400 text-sm">Aucune facture pour le moment</p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Derniers clients</h3>
-          <p className="text-gray-400 text-sm">Aucun client pour le moment</p>
+          {dernieresFactures.length === 0 ? (
+            <p className="text-gray-400 text-sm">Aucune facture pour le moment</p>
+          ) : (
+            <table className="w-full">
+              <thead className="border-b border-gray-100">
+                <tr>
+                  <th className="text-left py-2 text-sm font-semibold text-gray-600">Client</th>
+                  <th className="text-left py-2 text-sm font-semibold text-gray-600">Montant</th>
+                  <th className="text-left py-2 text-sm font-semibold text-gray-600">Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dernieresFactures.map((facture) => (
+                  <tr key={facture.id} className="border-b border-gray-50">
+                    <td className="py-3 text-gray-800">{facture.client}</td>
+                    <td className="py-3 font-semibold text-blue-700">{facture.montant} €</td>
+                    <td className="py-3">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        facture.statut === "Payée" ? "bg-green-100 text-green-700" :
+                        facture.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
+                        "bg-red-100 text-red-700"
+                      }`}>
+                        {facture.statut}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>
