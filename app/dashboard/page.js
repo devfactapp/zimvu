@@ -11,6 +11,7 @@ export default function Dashboard() {
     chiffreAffaires: 0,
     facturesEnvoyees: 0,
     facturesEnAttente: 0,
+    nombreClients: 0,
   })
   const [dernieresFactures, setDernieresFactures] = useState([])
 
@@ -25,6 +26,10 @@ export default function Dashboard() {
         .select('*')
         .order('created_at', { ascending: false })
 
+      const { data: clients } = await supabase
+        .from('clients')
+        .select('*')
+
       if (factures) {
         const total = factures.reduce((sum, f) => sum + Number(f.montant), 0)
         const enAttente = factures.filter(f => f.statut === 'En attente').length
@@ -32,6 +37,7 @@ export default function Dashboard() {
           chiffreAffaires: total,
           facturesEnvoyees: factures.length,
           facturesEnAttente: enAttente,
+          nombreClients: clients?.length || 0,
         })
         setDernieresFactures(factures.slice(0, 3))
       }
@@ -65,9 +71,9 @@ export default function Dashboard() {
       <div className="max-w-6xl mx-auto px-6 py-8">
         <h2 className="text-xl font-semibold text-gray-700 mb-6">Bonjour 👋 {user?.email}</h2>
 
-        <div className="grid grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-2xl shadow p-6">
-            <p className="text-gray-500 text-sm">Chiffre d'affaires total</p>
+            <p className="text-gray-500 text-sm">Chiffre d'affaires</p>
             <p className="text-3xl font-bold text-blue-700 mt-2">{stats.chiffreAffaires} €</p>
           </div>
           <div className="bg-white rounded-2xl shadow p-6">
@@ -78,10 +84,17 @@ export default function Dashboard() {
             <p className="text-gray-500 text-sm">Factures en attente</p>
             <p className="text-3xl font-bold text-blue-700 mt-2">{stats.facturesEnAttente}</p>
           </div>
+          <div className="bg-white rounded-2xl shadow p-6">
+            <p className="text-gray-500 text-sm">Clients</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">{stats.nombreClients}</p>
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4">Dernières factures</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-700">Dernières factures</h3>
+            <span onClick={() => router.push('/factures')} className="text-blue-600 cursor-pointer text-sm hover:underline">Voir tout</span>
+          </div>
           {dernieresFactures.length === 0 ? (
             <p className="text-gray-400 text-sm">Aucune facture pour le moment</p>
           ) : (
