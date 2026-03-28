@@ -9,20 +9,32 @@ export default function Factures() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchFactures = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { router.push('/'); return }
-
-      const { data } = await supabase
-        .from('factures')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      setFactures(data || [])
-      setLoading(false)
-    }
     fetchFactures()
   }, [])
+
+  const fetchFactures = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { router.push('/'); return }
+
+    const { data } = await supabase
+      .from('factures')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    setFactures(data || [])
+    setLoading(false)
+  }
+
+  const changerStatut = async (id, statutActuel) => {
+    const nouveauStatut = statutActuel === 'Payée' ? 'En attente' : 'Payée'
+    await supabase.from('factures').update({ statut: nouveauStatut }).eq('id', id)
+    fetchFactures()
+  }
+
+  const supprimerFacture = async (id) => {
+    await supabase.from('factures').delete().eq('id', id)
+    fetchFactures()
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -57,6 +69,7 @@ export default function Factures() {
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Date</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Montant</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Statut</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -67,12 +80,20 @@ export default function Factures() {
                     <td className="px-6 py-4 text-gray-600">{facture.date}</td>
                     <td className="px-6 py-4 font-semibold text-blue-700">{facture.montant} €</td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        facture.statut === "Payée" ? "bg-green-100 text-green-700" :
-                        facture.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
-                        "bg-red-100 text-red-700"
-                      }`}>
+                      <span
+                        onClick={() => changerStatut(facture.id, facture.statut)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer hover:opacity-75 ${
+                          facture.statut === "Payée" ? "bg-green-100 text-green-700" :
+                          facture.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
+                          "bg-red-100 text-red-700"
+                        }`}>
                         {facture.statut}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span onClick={() => supprimerFacture(facture.id)}
+                        className="text-red-500 cursor-pointer hover:underline text-sm">
+                        Supprimer
                       </span>
                     </td>
                   </tr>
