@@ -36,6 +36,71 @@ export default function Factures() {
     fetchFactures()
   }
 
+  const exporterPDF = async (facture) => {
+    const { default: jsPDF } = await import('jspdf')
+    const doc = new jsPDF()
+
+    doc.setFontSize(24)
+    doc.setTextColor(29, 78, 216)
+    doc.text('Zimvu', 20, 25)
+
+    doc.setFontSize(10)
+    doc.setTextColor(100, 100, 100)
+    doc.text('Votre outil de facturation intelligent', 20, 33)
+
+    doc.setDrawColor(29, 78, 216)
+    doc.setLineWidth(0.5)
+    doc.line(20, 38, 190, 38)
+
+    doc.setFontSize(18)
+    doc.setTextColor(30, 30, 30)
+    doc.text('FACTURE', 20, 52)
+
+    doc.setFontSize(10)
+    doc.setTextColor(100, 100, 100)
+    doc.text(`Date : ${facture.date}`, 20, 62)
+    doc.text(`Statut : ${facture.statut}`, 20, 70)
+
+    doc.setFontSize(12)
+    doc.setTextColor(30, 30, 30)
+    doc.text('Informations client', 20, 85)
+    doc.setFontSize(10)
+    doc.setTextColor(60, 60, 60)
+    doc.text(`Nom : ${facture.client}`, 20, 93)
+    doc.text(`Email : ${facture.email || 'Non renseigné'}`, 20, 101)
+
+    doc.setFontSize(12)
+    doc.setTextColor(30, 30, 30)
+    doc.text('Détails de la prestation', 20, 120)
+
+    doc.setFillColor(245, 247, 250)
+    doc.rect(20, 126, 170, 30, 'F')
+    doc.setFontSize(10)
+    doc.setTextColor(60, 60, 60)
+    doc.text('Description', 25, 136)
+    doc.text('Montant', 155, 136)
+    doc.setDrawColor(200, 200, 200)
+    doc.line(20, 140, 190, 140)
+    doc.text(facture.description || '', 25, 150)
+    doc.setTextColor(29, 78, 216)
+    doc.text(`${facture.montant} €`, 155, 150)
+
+    doc.setDrawColor(29, 78, 216)
+    doc.line(20, 162, 190, 162)
+    doc.setFontSize(12)
+    doc.setTextColor(30, 30, 30)
+    doc.text('Total TTC', 130, 172)
+    doc.setFontSize(14)
+    doc.setTextColor(29, 78, 216)
+    doc.text(`${facture.montant} €`, 165, 172)
+
+    doc.setFontSize(9)
+    doc.setTextColor(150, 150, 150)
+    doc.text('Merci pour votre confiance — Zimvu.vercel.app', 20, 270)
+
+    doc.save(`facture-${facture.client}-${facture.date}.pdf`)
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
@@ -90,7 +155,11 @@ export default function Factures() {
                         {facture.statut}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 flex gap-3">
+                      <span onClick={() => exporterPDF(facture)}
+                        className="text-blue-600 cursor-pointer hover:underline text-sm">
+                        PDF
+                      </span>
                       <span onClick={() => supprimerFacture(facture.id)}
                         className="text-red-500 cursor-pointer hover:underline text-sm">
                         Supprimer
