@@ -27,7 +27,9 @@ export default function Factures() {
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-700">Mes factures</h2>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+         <button onClick={() => router.push('/factures/nouvelle')} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          
+        
             + Nouvelle facture
           </button>
         </div>
