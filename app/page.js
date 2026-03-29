@@ -127,7 +127,12 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="px-6 py-8 text-center text-gray-400 text-sm border-t border-gray-100">
-        © 2026 Zimvu — L'outil de facturation pour auto-entrepreneurs
+        <p className="mb-3">© 2026 Zimvu — L'outil de facturation pour auto-entrepreneurs</p>
+        <div className="flex items-center justify-center gap-6">
+          <a href="/mentions-legales" className="hover:text-blue-600">Mentions légales</a>
+          <a href="/cgv" className="hover:text-blue-600">CGV</a>
+          <a href="/confidentialite" className="hover:text-blue-600">Confidentialité</a>
+        </div>
       </footer>
 
       {/* Modal Auth */}
