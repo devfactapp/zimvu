@@ -7,6 +7,7 @@ export default function Factures() {
   const router = useRouter()
   const [factures, setFactures] = useState([])
   const [loading, setLoading] = useState(true)
+  const [menuOuvert, setMenuOuvert] = useState(false)
 
   useEffect(() => {
     fetchFactures()
@@ -103,20 +104,55 @@ export default function Factures() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-blue-700 cursor-pointer" onClick={() => router.push('/dashboard')}>Zimvu</h1>
-        <div className="flex items-center gap-6">
-          <span onClick={() => router.push('/dashboard')} className="text-gray-600 cursor-pointer hover:text-blue-600">Tableau de bord</span>
-          <span onClick={() => router.push('/clients')} className="text-gray-600 cursor-pointer hover:text-blue-600">Clients</span>
-          <span onClick={() => router.push('/factures')} className="text-blue-600 font-semibold cursor-pointer">Factures</span>
+
+      {/* NAVBAR */}
+      <nav className="bg-white shadow-sm px-4 py-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-blue-700 cursor-pointer" onClick={() => router.push('/dashboard')}>Zimvu</h1>
+
+          {/* Menu desktop */}
+          <div className="hidden md:flex items-center gap-6">
+            <span onClick={() => router.push('/dashboard')} className="text-gray-600 cursor-pointer hover:text-blue-600">Tableau de bord</span>
+            <span onClick={() => router.push('/clients')} className="text-gray-600 cursor-pointer hover:text-blue-600">Clients</span>
+            <span onClick={() => router.push('/factures')} className="text-blue-600 font-semibold cursor-pointer">Factures</span>
+            <span onClick={() => router.push('/profil')} className="text-gray-600 cursor-pointer hover:text-blue-600">Mon profil</span>
+            <button
+              onClick={async () => { await supabase.auth.signOut(); router.push('/') }}
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm">
+              Déconnexion
+            </button>
+          </div>
+
+          {/* Hamburger */}
+          <button className="md:hidden flex flex-col gap-1.5 p-2" onClick={() => setMenuOuvert(!menuOuvert)}>
+            <span className="block w-6 h-0.5 bg-gray-700"></span>
+            <span className="block w-6 h-0.5 bg-gray-700"></span>
+            <span className="block w-6 h-0.5 bg-gray-700"></span>
+          </button>
         </div>
+
+        {/* Menu mobile */}
+        {menuOuvert && (
+          <div className="md:hidden flex flex-col gap-3 mt-4 pb-2 border-t border-gray-100 pt-4">
+            <span onClick={() => { router.push('/dashboard'); setMenuOuvert(false) }} className="text-gray-600 cursor-pointer">Tableau de bord</span>
+            <span onClick={() => { router.push('/clients'); setMenuOuvert(false) }} className="text-gray-600 cursor-pointer">Clients</span>
+            <span onClick={() => { router.push('/factures'); setMenuOuvert(false) }} className="text-blue-600 font-semibold cursor-pointer">Factures</span>
+            <span onClick={() => { router.push('/profil'); setMenuOuvert(false) }} className="text-gray-600 cursor-pointer">Mon profil</span>
+            <button
+              onClick={async () => { await supabase.auth.signOut(); router.push('/') }}
+              className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm w-full">
+              Déconnexion
+            </button>
+          </div>
+        )}
       </nav>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      {/* CONTENU */}
+      <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-700">Mes factures</h2>
           <button onClick={() => router.push('/factures/nouvelle')} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-            + Nouvelle facture
+            + Nouvelle
           </button>
         </div>
 
@@ -126,49 +162,78 @@ export default function Factures() {
           ) : factures.length === 0 ? (
             <p className="text-gray-400 text-sm p-6">Aucune facture pour le moment</p>
           ) : (
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Client</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Description</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Date</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Montant</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Statut</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+            /* Cartes sur mobile, tableau sur desktop */
+            <>
+              {/* Vue mobile : cartes */}
+              <div className="md:hidden divide-y divide-gray-100">
                 {factures.map((facture) => (
-                  <tr key={facture.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-800">{facture.client}</td>
-                    <td className="px-6 py-4 text-gray-600">{facture.description}</td>
-                    <td className="px-6 py-4 text-gray-600">{facture.date}</td>
-                    <td className="px-6 py-4 font-semibold text-blue-700">{facture.montant} €</td>
-                    <td className="px-6 py-4">
+                  <div key={facture.id} className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold text-gray-800">{facture.client}</span>
+                      <span className="font-bold text-blue-700">{facture.montant} €</span>
+                    </div>
+                    <p className="text-gray-500 text-sm mb-1">{facture.description}</p>
+                    <p className="text-gray-400 text-xs mb-3">{facture.date}</p>
+                    <div className="flex items-center justify-between">
                       <span
                         onClick={() => changerStatut(facture.id, facture.statut)}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer hover:opacity-75 ${
+                        className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer ${
                           facture.statut === "Payée" ? "bg-green-100 text-green-700" :
                           facture.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
                           "bg-red-100 text-red-700"
                         }`}>
                         {facture.statut}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 flex gap-3">
-                      <span onClick={() => exporterPDF(facture)}
-                        className="text-blue-600 cursor-pointer hover:underline text-sm">
-                        PDF
-                      </span>
-                      <span onClick={() => supprimerFacture(facture.id)}
-                        className="text-red-500 cursor-pointer hover:underline text-sm">
-                        Supprimer
-                      </span>
-                    </td>
-                  </tr>
+                      <div className="flex gap-4">
+                        <span onClick={() => exporterPDF(facture)} className="text-blue-600 cursor-pointer text-sm">PDF</span>
+                        <span onClick={() => supprimerFacture(facture.id)} className="text-red-500 cursor-pointer text-sm">Supprimer</span>
+                      </div>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+
+              {/* Vue desktop : tableau */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Client</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Description</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Date</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Montant</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Statut</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {factures.map((facture) => (
+                      <tr key={facture.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="px-6 py-4 font-medium text-gray-800">{facture.client}</td>
+                        <td className="px-6 py-4 text-gray-600">{facture.description}</td>
+                        <td className="px-6 py-4 text-gray-600">{facture.date}</td>
+                        <td className="px-6 py-4 font-semibold text-blue-700">{facture.montant} €</td>
+                        <td className="px-6 py-4">
+                          <span
+                            onClick={() => changerStatut(facture.id, facture.statut)}
+                            className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer hover:opacity-75 ${
+                              facture.statut === "Payée" ? "bg-green-100 text-green-700" :
+                              facture.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
+                              "bg-red-100 text-red-700"
+                            }`}>
+                            {facture.statut}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 flex gap-3">
+                          <span onClick={() => exporterPDF(facture)} className="text-blue-600 cursor-pointer hover:underline text-sm">PDF</span>
+                          <span onClick={() => supprimerFacture(facture.id)} className="text-red-500 cursor-pointer hover:underline text-sm">Supprimer</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>
