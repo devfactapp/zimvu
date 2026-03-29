@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../supabase'
 
@@ -14,6 +14,22 @@ export default function NouvelleFacture() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [numeroFacture, setNumeroFacture] = useState('')
+
+  useEffect(() => {
+    const genererNumero = async () => {
+      const { data } = await supabase
+        .from('factures')
+        .select('id')
+        .order('id', { ascending: false })
+        .limit(1)
+
+      const annee = new Date().getFullYear()
+      const numero = data && data.length > 0 ? data[0].id + 1 : 1
+      setNumeroFacture(`F-${annee}-${String(numero).padStart(3, '0')}`)
+    }
+    genererNumero()
+  }, [])
 
   const handleChange = (e) => {
     setFacture({ ...facture, [e.target.name]: e.target.value })
@@ -34,6 +50,7 @@ export default function NouvelleFacture() {
       date: facture.date,
       statut: 'En attente',
       user_id: session.user.id,
+      numero: numeroFacture,
     }])
 
     if (error) setError('Erreur lors de la création')
@@ -55,7 +72,10 @@ export default function NouvelleFacture() {
 
       <div className="max-w-3xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-700">Nouvelle facture</h2>
+          <div>
+            <h2 className="text-xl font-semibold text-gray-700">Nouvelle facture</h2>
+            {numeroFacture && <p className="text-blue-600 font-semibold text-sm mt-1">Numéro : {numeroFacture}</p>}
+          </div>
           <button onClick={() => router.push('/factures')} className="text-gray-500 hover:text-gray-700 text-sm">← Retour</button>
         </div>
 
