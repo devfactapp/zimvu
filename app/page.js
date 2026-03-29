@@ -13,19 +13,32 @@ export default function Home() {
   const [showAuth, setShowAuth] = useState(false)
 
   const handleAuth = async () => {
-    setLoading(true)
-    setError('')
-    if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password })
-      if (error) setError(error.message)
-      else setError('Vérifie ton email pour confirmer ton compte !')
+  setLoading(true)
+  setError('')
+  if (isSignUp) {
+    const { error } = await supabase.auth.signUp({ email, password })
+    if (error) {
+      setError(error.message)
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) setError('Email ou mot de passe incorrect')
-      else router.push('/dashboard')
+      // Envoi email de bienvenue
+      try {
+        await fetch('/api/welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        })
+      } catch (e) {
+        console.error('Email non envoyé:', e)
+      }
+      setError('Vérifie ton email pour confirmer ton compte !')
     }
-    setLoading(false)
+  } else {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) setError('Email ou mot de passe incorrect')
+    else router.push('/dashboard')
   }
+  setLoading(false)
+}
 
   return (
     <div className="min-h-screen bg-white">
@@ -68,7 +81,7 @@ export default function Home() {
       {/* Fonctionnalités */}
       <div className="max-w-5xl mx-auto px-6 py-16">
         <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">Tout ce dont vous avez besoin</h3>
-        <div className="grid grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-blue-50 rounded-2xl p-6">
             <div className="text-3xl mb-4">📄</div>
             <h4 className="text-lg font-semibold text-gray-800 mb-2">Factures professionnelles</h4>
@@ -127,12 +140,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="px-6 py-8 text-center text-gray-400 text-sm border-t border-gray-100">
-        <p className="mb-3">© 2026 Zimvu — L'outil de facturation pour auto-entrepreneurs</p>
-        <div className="flex items-center justify-center gap-6">
-          <a href="/mentions-legales" className="hover:text-blue-600">Mentions légales</a>
-          <a href="/cgv" className="hover:text-blue-600">CGV</a>
-          <a href="/confidentialite" className="hover:text-blue-600">Confidentialité</a>
-        </div>
+        © 2026 Zimvu — L'outil de facturation pour auto-entrepreneurs
       </footer>
 
       {/* Modal Auth */}
