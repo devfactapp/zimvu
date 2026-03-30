@@ -28,7 +28,7 @@ export default function CalculateurCotisations() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="max-w-2xl mx-auto px-4 py-8 bg-transparent">
       {/* Titre */}
       <div className="mb-8 text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
