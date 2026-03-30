@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../supabase'
 
@@ -9,11 +9,7 @@ export default function Factures() {
   const [loading, setLoading] = useState(true)
   const [menuOuvert, setMenuOuvert] = useState(false)
 
-  useEffect(() => {
-    fetchFactures()
-  }, [])
-
-  const fetchFactures = async () => {
+  const fetchFactures = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/'); return }
 
@@ -24,17 +20,28 @@ export default function Factures() {
 
     setFactures(data || [])
     setLoading(false)
-  }
+  }, [router])
+
+  useEffect(() => {
+    fetchFactures()
+  }, [fetchFactures])
 
   const changerStatut = async (id, statutActuel) => {
-    const nouveauStatut = statutActuel === 'Payée' ? 'En attente' : 'Payée'
+    let nouveauStatut
+    if (statutActuel === 'Payée') {
+      nouveauStatut = 'En attente'
+    } else if (statutActuel === 'En attente') {
+      nouveauStatut = 'Payée'
+    } else {
+      nouveauStatut = 'Payée'
+    }
     await supabase.from('factures').update({ statut: nouveauStatut }).eq('id', id)
-    fetchFactures()
+    setFactures(prev => prev.map(f => f.id === id ? { ...f, statut: nouveauStatut } : f))
   }
 
   const supprimerFacture = async (id) => {
     await supabase.from('factures').delete().eq('id', id)
-    fetchFactures()
+    await fetchFactures()
   }
 
   const exporterPDF = async (facture) => {
@@ -162,7 +169,6 @@ export default function Factures() {
           ) : factures.length === 0 ? (
             <p className="text-gray-400 text-sm p-6">Aucune facture pour le moment</p>
           ) : (
-            /* Cartes sur mobile, tableau sur desktop */
             <>
               {/* Vue mobile : cartes */}
               <div className="md:hidden divide-y divide-gray-100">
