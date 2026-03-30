@@ -32,7 +32,7 @@ export default function Dashboard() {
         .select('*')
 
       if (factures) {
-        const total = factures.reduce((sum, f) => sum + Number(f.montant), 0)
+        const total = factures.filter(f => f.statut !== 'Annulée').reduce((sum, f) => sum + Number(f.montant), 0)
         const enAttente = factures.filter(f => f.statut === 'En attente').length
         setStats({
           chiffreAffaires: total,
