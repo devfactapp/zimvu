@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../supabase'
+import Navbar from '../components/Navbar'
 
 export default function Clients() {
   const router = useRouter()
@@ -10,7 +11,6 @@ export default function Clients() {
   const [showForm, setShowForm] = useState(false)
   const [nouveau, setNouveau] = useState({ nom: '', email: '', telephone: '' })
   const [saving, setSaving] = useState(false)
-  const [menuOuvert, setMenuOuvert] = useState(false)
 
   useEffect(() => {
     fetchClients()
@@ -54,47 +54,7 @@ export default function Clients() {
   return (
     <div className="min-h-screen bg-gray-100">
 
-      {/* NAVBAR */}
-      <nav className="bg-white shadow-sm px-4 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-blue-700 cursor-pointer" onClick={() => router.push('/dashboard')}>Zimvu</h1>
-
-          {/* Menu desktop */}
-          <div className="hidden md:flex items-center gap-6">
-            <span onClick={() => router.push('/dashboard')} className="text-gray-600 cursor-pointer hover:text-blue-600">Tableau de bord</span>
-            <span onClick={() => router.push('/clients')} className="text-blue-600 font-semibold cursor-pointer">Clients</span>
-            <span onClick={() => router.push('/factures')} className="text-gray-600 cursor-pointer hover:text-blue-600">Factures</span>
-            <span onClick={() => router.push('/profil')} className="text-gray-600 cursor-pointer hover:text-blue-600">Mon profil</span>
-            <button
-              onClick={async () => { await supabase.auth.signOut(); router.push('/') }}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm">
-              Déconnexion
-            </button>
-          </div>
-
-          {/* Hamburger */}
-          <button className="md:hidden flex flex-col gap-1.5 p-2" onClick={() => setMenuOuvert(!menuOuvert)}>
-            <span className="block w-6 h-0.5 bg-gray-700"></span>
-            <span className="block w-6 h-0.5 bg-gray-700"></span>
-            <span className="block w-6 h-0.5 bg-gray-700"></span>
-          </button>
-        </div>
-
-        {/* Menu mobile */}
-        {menuOuvert && (
-          <div className="md:hidden flex flex-col gap-3 mt-4 pb-2 border-t border-gray-100 pt-4">
-            <span onClick={() => { router.push('/dashboard'); setMenuOuvert(false) }} className="text-gray-600 cursor-pointer">Tableau de bord</span>
-            <span onClick={() => { router.push('/clients'); setMenuOuvert(false) }} className="text-blue-600 font-semibold cursor-pointer">Clients</span>
-            <span onClick={() => { router.push('/factures'); setMenuOuvert(false) }} className="text-gray-600 cursor-pointer">Factures</span>
-            <span onClick={() => { router.push('/profil'); setMenuOuvert(false) }} className="text-gray-600 cursor-pointer">Mon profil</span>
-            <button
-              onClick={async () => { await supabase.auth.signOut(); router.push('/') }}
-              className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm w-full">
-              Déconnexion
-            </button>
-          </div>
-        )}
-      </nav>
+      <Navbar pageCourante="/clients" />
 
       {/* CONTENU */}
       <div className="max-w-6xl mx-auto px-4 py-6">
