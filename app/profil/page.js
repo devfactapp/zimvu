@@ -19,8 +19,8 @@ export default function Profil() {
       const { data: factures } = await supabase.from('factures').select('*')
       const { data: clients } = await supabase.from('clients').select('*')
       if (factures) {
-        const total = factures.reduce((sum, f) => sum + Number(f.montant), 0)
-        setStats({ factures: factures.length, clients: clients?.length || 0, chiffreAffaires: total })
+      const total = factures.filter(f => f.statut !== 'Annulée').reduce((sum, f) => sum + Number(f.montant), 0)
+        setStats({ factures: factures.filter(f => f.statut !== 'Annulée').length, clients: clients?.length || 0, chiffreAffaires: total })
       }
       setLoading(false)
     }
