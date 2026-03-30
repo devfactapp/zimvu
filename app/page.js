@@ -7,38 +7,56 @@ export default function Home() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [prenom, setPrenom] = useState('')
+  const [nom, setNom] = useState('')
+  const [telephone, setTelephone] = useState('')
+  const [adresse, setAdresse] = useState('')
+  const [nomEntreprise, setNomEntreprise] = useState('')
+  const [siret, setSiret] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
 
   const handleAuth = async () => {
-  setLoading(true)
-  setError('')
-  if (isSignUp) {
-    const { error } = await supabase.auth.signUp({ email, password })
-    if (error) {
-      setError(error.message)
-    } else {
-      // Envoi email de bienvenue
-      try {
-        await fetch('/api/welcome', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        })
-      } catch (e) {
-        console.error('Email non envoyé:', e)
+    setLoading(true)
+    setError('')
+    if (isSignUp) {
+      const { data, error } = await supabase.auth.signUp({ email, password })
+      if (error) {
+        setError(error.message)
+      } else {
+        // Sauvegarder le profil
+        if (data.user) {
+          await supabase.from('profils').insert([{
+            id: data.user.id,
+            prenom,
+            nom,
+            telephone,
+            adresse,
+            nom_entreprise: nomEntreprise,
+            siret,
+          }])
+        }
+        // Envoi email de bienvenue
+        try {
+          await fetch('/api/welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          })
+        } catch (e) {
+          console.error('Email non envoyé:', e)
+        }
+        setError('Vérifie ton email pour confirmer ton compte !')
       }
-      setError('Vérifie ton email pour confirmer ton compte !')
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) setError('Email ou mot de passe incorrect')
+      else router.push('/dashboard')
     }
-  } else {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) setError('Email ou mot de passe incorrect')
-    else router.push('/dashboard')
+    setLoading(false)
   }
-  setLoading(false)
-}
 
   return (
     <div className="min-h-screen bg-white">
@@ -140,23 +158,52 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="px-6 py-8 text-center text-gray-400 text-sm border-t border-gray-100">
-        © 2026 Zimvu — L'outil de facturation pour auto-entrepreneurs
+        <p className="mb-3">© 2026 Zimvu — L'outil de facturation pour auto-entrepreneurs</p>
+        <div className="flex items-center justify-center gap-6">
+          <span onClick={() => router.push('/mentions-legales')} className="cursor-pointer hover:text-blue-600">Mentions légales</span>
+          <span onClick={() => router.push('/cgv')} className="cursor-pointer hover:text-blue-600">CGV</span>
+          <span onClick={() => router.push('/confidentialite')} className="cursor-pointer hover:text-blue-600">Politique de confidentialité</span>
+        </div>
       </footer>
 
       {/* Modal Auth */}
       {showAuth && (
         <div style={{position:'fixed', inset:0, backgroundColor:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:'0 16px'}}>
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 max-h-screen overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-blue-700">Zimvu</h2>
               <span onClick={() => setShowAuth(false)} className="text-gray-400 cursor-pointer hover:text-gray-600 text-xl">✕</span>
             </div>
             <h3 className="text-lg font-semibold text-gray-800 mb-6">{isSignUp ? 'Créer un compte' : 'Se connecter'}</h3>
             <div className="space-y-4">
-              <input type="email" placeholder="votre@email.com" value={email}
+              {isSignUp && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input type="text" placeholder="Prénom *" value={prenom}
+                      onChange={(e) => setPrenom(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input type="text" placeholder="Nom *" value={nom}
+                      onChange={(e) => setNom(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  </div>
+                  <input type="tel" placeholder="Téléphone *" value={telephone}
+                    onChange={(e) => setTelephone(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="text" placeholder="Adresse postale (optionnel)" value={adresse}
+                    onChange={(e) => setAdresse(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="text" placeholder="Nom de l'entreprise (optionnel)" value={nomEntreprise}
+                    onChange={(e) => setNomEntreprise(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input type="text" placeholder="Numéro SIRET (optionnel)" value={siret}
+                    onChange={(e) => setSiret(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </>
+              )}
+              <input type="email" placeholder="Adresse e-mail *" value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <input type="password" placeholder="••••••••" value={password}
+              <input type="password" placeholder="Mot de passe *" value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               {error && <p className="text-sm text-center text-red-500">{error}</p>}
