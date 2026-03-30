@@ -9,6 +9,7 @@ export default function PageCalculateurDashboard() {
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar pageCourante="/dashboard/calculateur" />
+
       <div className="max-w-2xl mx-auto px-4 py-6">
         <button
           onClick={() => router.push('/dashboard')}
@@ -16,6 +17,7 @@ export default function PageCalculateurDashboard() {
         >
           ← Retour au tableau de bord
         </button>
+
         <CalculateurCotisations />
       </div>
     </div>
