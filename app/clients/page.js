@@ -11,6 +11,7 @@ export default function Clients() {
   const [showForm, setShowForm] = useState(false)
   const [nouveau, setNouveau] = useState({ nom: '', email: '', telephone: '' })
   const [saving, setSaving] = useState(false)
+  const [confirmSupprimer, setConfirmSupprimer] = useState(null)
 
   useEffect(() => {
     fetchClients()
@@ -48,6 +49,7 @@ export default function Clients() {
 
   const supprimerClient = async (id) => {
     await supabase.from('clients').delete().eq('id', id)
+    setConfirmSupprimer(null)
     fetchClients()
   }
 
@@ -55,6 +57,30 @@ export default function Clients() {
     <div className="min-h-screen bg-gray-100">
 
       <Navbar pageCourante="/clients" />
+
+      {/* MODAL CONFIRMATION SUPPRESSION */}
+      {confirmSupprimer && (
+        <div style={{position:'fixed', inset:0, backgroundColor:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:'0 16px'}}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Supprimer le client ?</h3>
+            <p className="text-gray-500 text-sm mb-6">
+              Le client <strong>{confirmSupprimer.nom}</strong> sera supprimé définitivement.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => supprimerClient(confirmSupprimer.id)}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg text-sm">
+                Supprimer
+              </button>
+              <button
+                onClick={() => setConfirmSupprimer(null)}
+                className="flex-1 border border-gray-300 text-gray-600 font-semibold py-2 rounded-lg text-sm">
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CONTENU */}
       <div className="max-w-6xl mx-auto px-4 py-6">
@@ -116,7 +142,7 @@ export default function Clients() {
                   <div key={client.id} className="p-4">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-gray-800">{client.nom}</span>
-                      <span onClick={() => supprimerClient(client.id)} className="text-red-500 cursor-pointer text-sm">Supprimer</span>
+                      <span onClick={() => setConfirmSupprimer(client)} className="text-red-500 cursor-pointer text-sm">Supprimer</span>
                     </div>
                     <p className="text-gray-500 text-sm">{client.email}</p>
                     <p className="text-gray-400 text-sm">{client.telephone}</p>
@@ -142,7 +168,7 @@ export default function Clients() {
                         <td className="px-6 py-4 text-gray-600">{client.email}</td>
                         <td className="px-6 py-4 text-gray-600">{client.telephone}</td>
                         <td className="px-6 py-4">
-                          <span onClick={() => supprimerClient(client.id)} className="text-red-500 cursor-pointer hover:underline text-sm">Supprimer</span>
+                          <span onClick={() => setConfirmSupprimer(client)} className="text-red-500 cursor-pointer hover:underline text-sm">Supprimer</span>
                         </td>
                       </tr>
                     ))}

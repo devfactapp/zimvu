@@ -8,6 +8,7 @@ export default function Factures() {
   const router = useRouter()
   const [factures, setFactures] = useState([])
   const [loading, setLoading] = useState(true)
+  const [confirmSupprimer, setConfirmSupprimer] = useState(null)
 
   const fetchFactures = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
@@ -27,7 +28,6 @@ export default function Factures() {
   }, [fetchFactures])
 
   const changerStatut = async (id, statutActuel) => {
-    // Cycle : En attente → Payée → Annulée → En attente
     const cycle = { 'En attente': 'Payée', 'Payée': 'Annulée', 'Annulée': 'En attente' }
     const nouveauStatut = cycle[statutActuel] || 'Payée'
     await supabase.from('factures').update({ statut: nouveauStatut }).eq('id', id)
@@ -36,6 +36,7 @@ export default function Factures() {
 
   const supprimerFacture = async (id) => {
     await supabase.from('factures').delete().eq('id', id)
+    setConfirmSupprimer(null)
     await fetchFactures()
   }
 
@@ -109,6 +110,30 @@ export default function Factures() {
 
       <Navbar pageCourante="/factures" />
 
+      {/* MODAL CONFIRMATION SUPPRESSION */}
+      {confirmSupprimer && (
+        <div style={{position:'fixed', inset:0, backgroundColor:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:'0 16px'}}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Supprimer la facture ?</h3>
+            <p className="text-gray-500 text-sm mb-6">
+              La facture de <strong>{confirmSupprimer.client}</strong> ({confirmSupprimer.montant} €) sera supprimée définitivement.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => supprimerFacture(confirmSupprimer.id)}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg text-sm">
+                Supprimer
+              </button>
+              <button
+                onClick={() => setConfirmSupprimer(null)}
+                className="flex-1 border border-gray-300 text-gray-600 font-semibold py-2 rounded-lg text-sm">
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CONTENU */}
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
@@ -148,7 +173,7 @@ export default function Factures() {
                       </span>
                       <div className="flex gap-4">
                         <span onClick={() => exporterPDF(facture)} className="text-blue-600 cursor-pointer text-sm">PDF</span>
-                        <span onClick={() => supprimerFacture(facture.id)} className="text-red-500 cursor-pointer text-sm">Supprimer</span>
+                        <span onClick={() => setConfirmSupprimer(facture)} className="text-red-500 cursor-pointer text-sm">Supprimer</span>
                       </div>
                     </div>
                   </div>
@@ -189,7 +214,7 @@ export default function Factures() {
                         </td>
                         <td className="px-6 py-4 flex gap-3">
                           <span onClick={() => exporterPDF(facture)} className="text-blue-600 cursor-pointer hover:underline text-sm">PDF</span>
-                          <span onClick={() => supprimerFacture(facture.id)} className="text-red-500 cursor-pointer hover:underline text-sm">Supprimer</span>
+                          <span onClick={() => setConfirmSupprimer(facture)} className="text-red-500 cursor-pointer hover:underline text-sm">Supprimer</span>
                         </td>
                       </tr>
                     ))}
