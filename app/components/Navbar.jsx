@@ -14,6 +14,7 @@ export default function Navbar({ pageCourante }) {
     { label: 'Factures', href: '/factures' },
     { label: 'Devis', href: '/devis' },
     { label: 'Frais', href: '/frais' },
+{ label: 'Export', href: '/export' },
     { label: 'Calculateur', href: '/dashboard/calculateur' },
     { label: 'Mon profil', href: '/profil' },
   ]
