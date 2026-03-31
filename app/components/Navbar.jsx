@@ -8,12 +8,13 @@ export default function Navbar({ pageCourante }) {
   const router = useRouter()
   const [menuOuvert, setMenuOuvert] = useState(false)
 
-  const liens = [
+ const liens = [
     { label: 'Tableau de bord', href: '/dashboard' },
     { label: 'Clients', href: '/clients' },
     { label: 'Factures', href: '/factures' },
     { label: 'Devis', href: '/devis' },
-{ label: 'Calculateur', href: '/dashboard/calculateur' },
+    { label: 'Frais', href: '/frais' },
+    { label: 'Calculateur', href: '/dashboard/calculateur' },
     { label: 'Mon profil', href: '/profil' },
   ]
 
