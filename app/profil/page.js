@@ -26,7 +26,7 @@ export default function Profil() {
     }
     fetchData()
   }, [])
-
+  
   const passerAuPro = async () => {
     setCheckoutLoading(true)
     try {

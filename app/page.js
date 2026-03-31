@@ -17,6 +17,8 @@ export default function Home() {
   const [error, setError] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
+  const [motDePasseOublie, setMotDePasseOublie] = useState(false)
+  const [resetEnvoye, setResetEnvoye] = useState(false)
 
   const handleAuth = async () => {
     setLoading(true)
@@ -26,7 +28,6 @@ export default function Home() {
       if (error) {
         setError(error.message)
       } else {
-        // Sauvegarder le profil
         if (data.user) {
           await supabase.from('profils').insert([{
             id: data.user.id,
@@ -38,7 +39,6 @@ export default function Home() {
             siret,
           }])
         }
-        // Envoi email de bienvenue
         try {
           await fetch('/api/welcome', {
             method: 'POST',
@@ -58,17 +58,32 @@ export default function Home() {
     setLoading(false)
   }
 
+  const handleResetPassword = async () => {
+    if (!email) { setError('Entre ton adresse email'); return }
+    setLoading(true)
+    setError('')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) {
+      setError('Erreur lors de l\'envoi. Vérifie ton email.')
+    } else {
+      setResetEnvoye(true)
+    }
+    setLoading(false)
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
       <nav className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
         <h1 className="text-2xl font-bold text-blue-700">Zimvu</h1>
         <div className="flex items-center gap-4">
-          <span onClick={() => { setShowAuth(true); setIsSignUp(false) }}
+          <span onClick={() => { setShowAuth(true); setIsSignUp(false); setMotDePasseOublie(false); setResetEnvoye(false) }}
             className="text-gray-600 cursor-pointer hover:text-blue-600 text-sm font-medium">
             Se connecter
           </span>
-          <button onClick={() => { setShowAuth(true); setIsSignUp(true) }}
+          <button onClick={() => { setShowAuth(true); setIsSignUp(true); setMotDePasseOublie(false); setResetEnvoye(false) }}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
             Essai gratuit
           </button>
@@ -172,52 +187,107 @@ export default function Home() {
           <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 max-h-screen overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-blue-700">Zimvu</h2>
-              <span onClick={() => setShowAuth(false)} className="text-gray-400 cursor-pointer hover:text-gray-600 text-xl">✕</span>
+              <span onClick={() => { setShowAuth(false); setMotDePasseOublie(false); setResetEnvoye(false) }} className="text-gray-400 cursor-pointer hover:text-gray-600 text-xl">✕</span>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-6">{isSignUp ? 'Créer un compte' : 'Se connecter'}</h3>
-            <div className="space-y-4">
-              {isSignUp && (
-                <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <input type="text" placeholder="Prénom *" value={prenom}
-                      onChange={(e) => setPrenom(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                    <input type="text" placeholder="Nom *" value={nom}
-                      onChange={(e) => setNom(e.target.value)}
-                      className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+            {/* Mode mot de passe oublié */}
+            {motDePasseOublie ? (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Mot de passe oublié</h3>
+                {resetEnvoye ? (
+                  <div className="text-center py-6">
+                    <div className="text-4xl mb-4">📧</div>
+                    <p className="text-green-600 font-medium mb-2">Email envoyé !</p>
+                    <p className="text-gray-500 text-sm">Vérifie ta boîte mail et clique sur le lien pour réinitialiser ton mot de passe.</p>
+                    <button
+                      onClick={() => { setMotDePasseOublie(false); setResetEnvoye(false) }}
+                      className="mt-6 text-blue-600 text-sm cursor-pointer hover:underline">
+                      Retour à la connexion
+                    </button>
                   </div>
-                  <input type="tel" placeholder="Téléphone *" value={telephone}
-                    onChange={(e) => setTelephone(e.target.value)}
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-gray-500 text-sm mb-4">Entre ton email et on t'envoie un lien de réinitialisation.</p>
+                    <input
+                      type="email"
+                      placeholder="Adresse e-mail *"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {error && <p className="text-sm text-center text-red-500">{error}</p>}
+                    <button
+                      onClick={handleResetPassword}
+                      disabled={loading}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">
+                      {loading ? 'Envoi...' : 'Envoyer le lien'}
+                    </button>
+                    <p className="text-center text-sm text-gray-500">
+                      <span onClick={() => { setMotDePasseOublie(false); setError('') }} className="text-blue-600 cursor-pointer hover:underline">
+                        Retour à la connexion
+                      </span>
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Mode connexion / inscription */
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-6">{isSignUp ? 'Créer un compte' : 'Se connecter'}</h3>
+                <div className="space-y-4">
+                  {isSignUp && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input type="text" placeholder="Prénom *" value={prenom}
+                          onChange={(e) => setPrenom(e.target.value)}
+                          className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="text" placeholder="Nom *" value={nom}
+                          onChange={(e) => setNom(e.target.value)}
+                          className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <input type="tel" placeholder="Téléphone *" value={telephone}
+                        onChange={(e) => setTelephone(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="text" placeholder="Adresse postale (optionnel)" value={adresse}
+                        onChange={(e) => setAdresse(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="text" placeholder="Nom de l'entreprise (optionnel)" value={nomEntreprise}
+                        onChange={(e) => setNomEntreprise(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="text" placeholder="Numéro SIRET (optionnel)" value={siret}
+                        onChange={(e) => setSiret(e.target.value)}
+                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </>
+                  )}
+                  <input type="email" placeholder="Adresse e-mail *" value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <input type="text" placeholder="Adresse postale (optionnel)" value={adresse}
-                    onChange={(e) => setAdresse(e.target.value)}
+                  <input type="password" placeholder="Mot de passe *" value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <input type="text" placeholder="Nom de l'entreprise (optionnel)" value={nomEntreprise}
-                    onChange={(e) => setNomEntreprise(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                  <input type="text" placeholder="Numéro SIRET (optionnel)" value={siret}
-                    onChange={(e) => setSiret(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </>
-              )}
-              <input type="email" placeholder="Adresse e-mail *" value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <input type="password" placeholder="Mot de passe *" value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              {error && <p className="text-sm text-center text-red-500">{error}</p>}
-              <button onClick={handleAuth} disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">
-                {loading ? 'Chargement...' : isSignUp ? 'Créer mon compte' : 'Se connecter'}
-              </button>
-            </div>
-            <p className="text-center text-sm text-gray-500 mt-4">
-              {isSignUp ? 'Déjà un compte ?' : 'Pas encore de compte ?'}{' '}
-              <span onClick={() => setIsSignUp(!isSignUp)} className="text-blue-600 cursor-pointer font-medium">
-                {isSignUp ? 'Se connecter' : 'Créer un compte'}
-              </span>
-            </p>
+                  {!isSignUp && (
+                    <p className="text-right">
+                      <span
+                        onClick={() => { setMotDePasseOublie(true); setError('') }}
+                        className="text-blue-600 text-sm cursor-pointer hover:underline">
+                        Mot de passe oublié ?
+                      </span>
+                    </p>
+                  )}
+                  {error && <p className="text-sm text-center text-red-500">{error}</p>}
+                  <button onClick={handleAuth} disabled={loading}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">
+                    {loading ? 'Chargement...' : isSignUp ? 'Créer mon compte' : 'Se connecter'}
+                  </button>
+                </div>
+                <p className="text-center text-sm text-gray-500 mt-4">
+                  {isSignUp ? 'Déjà un compte ?' : 'Pas encore de compte ?'}{' '}
+                  <span onClick={() => { setIsSignUp(!isSignUp); setError('') }} className="text-blue-600 cursor-pointer font-medium">
+                    {isSignUp ? 'Se connecter' : 'Créer un compte'}
+                  </span>
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
