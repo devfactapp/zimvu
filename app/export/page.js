@@ -36,6 +36,7 @@ export default function Export() {
       .select('*')
       .gte('date', debut)
       .lte('date', fin)
+      .neq('statut', 'Annulée')
       .order('date')
 
     const { data: frais } = await supabase
@@ -49,20 +50,14 @@ export default function Export() {
     setLoading(false)
   }
 
-  const totalCA = donnees.factures
-    .filter(f => f.statut !== 'Annulée')
-    .reduce((sum, f) => sum + Number(f.montant), 0)
-
-  const totalFrais = donnees.frais
-    .reduce((sum, f) => sum + Number(f.montant), 0)
-
+  const totalCA = donnees.factures.reduce((sum, f) => sum + Number(f.montant), 0)
+  const totalFrais = donnees.frais.reduce((sum, f) => sum + Number(f.montant), 0)
   const netEstime = totalCA - totalFrais
 
   const exporterPDF = async () => {
     setExporting(true)
     const { default: jsPDF } = await import('jspdf')
     const doc = new jsPDF()
-
     const periode = `${MOIS[moisSelectionne]} ${anneeSelectionnee}`
 
     // En-tête
@@ -84,7 +79,6 @@ export default function Export() {
     doc.setFontSize(12)
     doc.setTextColor(30, 30, 30)
     doc.text('Résumé', 20, 68)
-
     doc.setFillColor(245, 247, 250)
     doc.rect(20, 72, 170, 40, 'F')
     doc.setFontSize(10)
@@ -106,50 +100,98 @@ export default function Export() {
     doc.setFontSize(12)
     doc.setTextColor(30, 30, 30)
     doc.text(`Factures (${donnees.factures.length})`, 20, y)
-    y += 8
+    y += 6
+
+    // En-tête tableau factures
+    doc.setFillColor(29, 78, 216)
+    doc.rect(20, y, 170, 8, 'F')
+    doc.setFontSize(9)
+    doc.setTextColor(255, 255, 255)
+    doc.text('Date', 25, y + 5.5)
+    doc.text('Client', 55, y + 5.5)
+    doc.text('Description', 95, y + 5.5)
+    doc.text('Statut', 140, y + 5.5)
+    doc.text('Montant', 165, y + 5.5)
+    y += 10
 
     if (donnees.factures.length === 0) {
-      doc.setFontSize(9)
       doc.setTextColor(150, 150, 150)
       doc.text('Aucune facture ce mois-ci', 25, y)
       y += 8
     } else {
-      donnees.factures.forEach(f => {
+      donnees.factures.forEach((f, i) => {
         if (y > 260) { doc.addPage(); y = 20 }
-        doc.setFontSize(9)
+        if (i % 2 === 0) {
+          doc.setFillColor(248, 250, 252)
+          doc.rect(20, y - 3, 170, 8, 'F')
+        }
+        doc.setFontSize(8)
         doc.setTextColor(60, 60, 60)
-        doc.text(f.date, 25, y)
-        doc.text(f.client, 55, y)
-        doc.text(f.statut, 120, y)
+        doc.text(f.date, 25, y + 2)
+        doc.text(f.client.substring(0, 18), 55, y + 2)
+        doc.text((f.description || '').substring(0, 22), 95, y + 2)
+        doc.text(f.statut, 140, y + 2)
         doc.setTextColor(29, 78, 216)
-        doc.text(`${Number(f.montant).toFixed(2)} €`, 165, y)
+        doc.text(`${Number(f.montant).toFixed(2)} €`, 165, y + 2)
         y += 8
       })
+
+      // Total factures
+      doc.setFillColor(29, 78, 216)
+      doc.rect(20, y, 170, 8, 'F')
+      doc.setFontSize(9)
+      doc.setTextColor(255, 255, 255)
+      doc.text('TOTAL CA', 25, y + 5.5)
+      doc.text(`${totalCA.toFixed(2)} €`, 165, y + 5.5)
+      y += 12
     }
 
     // Frais
-    y += 8
+    y += 4
     doc.setFontSize(12)
     doc.setTextColor(30, 30, 30)
     doc.text(`Notes de frais (${donnees.frais.length})`, 20, y)
-    y += 8
+    y += 6
+
+    // En-tête tableau frais
+    doc.setFillColor(239, 68, 68)
+    doc.rect(20, y, 170, 8, 'F')
+    doc.setFontSize(9)
+    doc.setTextColor(255, 255, 255)
+    doc.text('Date', 25, y + 5.5)
+    doc.text('Catégorie', 55, y + 5.5)
+    doc.text('Description', 100, y + 5.5)
+    doc.text('Montant', 165, y + 5.5)
+    y += 10
 
     if (donnees.frais.length === 0) {
-      doc.setFontSize(9)
       doc.setTextColor(150, 150, 150)
       doc.text('Aucune note de frais ce mois-ci', 25, y)
     } else {
-      donnees.frais.forEach(f => {
+      donnees.frais.forEach((f, i) => {
         if (y > 260) { doc.addPage(); y = 20 }
-        doc.setFontSize(9)
+        if (i % 2 === 0) {
+          doc.setFillColor(255, 248, 248)
+          doc.rect(20, y - 3, 170, 8, 'F')
+        }
+        doc.setFontSize(8)
         doc.setTextColor(60, 60, 60)
-        doc.text(f.date, 25, y)
-        doc.text(f.categorie, 55, y)
-        doc.text(f.description || '', 100, y)
+        doc.text(f.date, 25, y + 2)
+        doc.text(f.categorie, 55, y + 2)
+        doc.text((f.description || '').substring(0, 25), 100, y + 2)
         doc.setTextColor(239, 68, 68)
-        doc.text(`- ${Number(f.montant).toFixed(2)} €`, 165, y)
+        doc.text(`- ${Number(f.montant).toFixed(2)} €`, 165, y + 2)
         y += 8
       })
+
+      // Total frais
+      doc.setFillColor(239, 68, 68)
+      doc.rect(20, y, 170, 8, 'F')
+      doc.setFontSize(9)
+      doc.setTextColor(255, 255, 255)
+      doc.text('TOTAL FRAIS', 25, y + 5.5)
+      doc.text(`- ${totalFrais.toFixed(2)} €`, 165, y + 5.5)
+      y += 12
     }
 
     // Footer
@@ -164,34 +206,74 @@ export default function Export() {
   const exporterExcel = async () => {
     setExporting(true)
     const XLSX = await import('xlsx')
-
     const wb = XLSX.utils.book_new()
+    const periode = `${MOIS[moisSelectionne]} ${anneeSelectionnee}`
 
-    // Feuille Résumé
-    const resume = [
-      ['Rapport Zimvu', `${MOIS[moisSelectionne]} ${anneeSelectionnee}`],
+    // ── Feuille Résumé ──
+    const wsResume = XLSX.utils.aoa_to_sheet([
+      ['RAPPORT ZIMVU', periode],
+      ['Généré le', new Date().toLocaleDateString('fr-FR')],
       [],
-      ['Chiffre d\'affaires', totalCA.toFixed(2) + ' €'],
-      ['Total frais', totalFrais.toFixed(2) + ' €'],
-      ['Net estimé', netEstime.toFixed(2) + ' €'],
-    ]
-    const wsResume = XLSX.utils.aoa_to_sheet(resume)
+      ['RÉCAPITULATIF', ''],
+      ['Chiffre d\'affaires', totalCA],
+      ['Total des frais', totalFrais],
+      ['Net estimé', netEstime],
+      [],
+      ['Nombre de factures', donnees.factures.length],
+      ['Nombre de notes de frais', donnees.frais.length],
+    ])
+
+    // Largeurs colonnes
+    wsResume['!cols'] = [{ wch: 30 }, { wch: 20 }]
+
     XLSX.utils.book_append_sheet(wb, wsResume, 'Résumé')
 
-    // Feuille Factures
-    const facturesData = [
+    // ── Feuille Factures ──
+    const facturesRows = [
       ['Date', 'Client', 'Description', 'Statut', 'Montant (€)'],
-      ...donnees.factures.map(f => [f.date, f.client, f.description || '', f.statut, Number(f.montant)])
+      ...donnees.factures.map(f => [
+        f.date,
+        f.client,
+        f.description || '',
+        f.statut,
+        Number(f.montant)
+      ]),
+      [],
+      ['', '', '', 'TOTAL CA', totalCA],
     ]
-    const wsFactures = XLSX.utils.aoa_to_sheet(facturesData)
+
+    const wsFactures = XLSX.utils.aoa_to_sheet(facturesRows)
+    wsFactures['!cols'] = [
+      { wch: 12 },
+      { wch: 25 },
+      { wch: 35 },
+      { wch: 15 },
+      { wch: 15 },
+    ]
     XLSX.utils.book_append_sheet(wb, wsFactures, 'Factures')
 
-    // Feuille Frais
-    const fraisData = [
+    // ── Feuille Frais ──
+    const fraisRows = [
       ['Date', 'Catégorie', 'Description', 'Statut', 'Montant (€)'],
-      ...donnees.frais.map(f => [f.date, f.categorie, f.description || '', f.statut, Number(f.montant)])
+      ...donnees.frais.map(f => [
+        f.date,
+        f.categorie,
+        f.description || '',
+        f.statut,
+        Number(f.montant)
+      ]),
+      [],
+      ['', '', '', 'TOTAL FRAIS', totalFrais],
     ]
-    const wsFrais = XLSX.utils.aoa_to_sheet(fraisData)
+
+    const wsFrais = XLSX.utils.aoa_to_sheet(fraisRows)
+    wsFrais['!cols'] = [
+      { wch: 12 },
+      { wch: 20 },
+      { wch: 35 },
+      { wch: 15 },
+      { wch: 15 },
+    ]
     XLSX.utils.book_append_sheet(wb, wsFrais, 'Notes de frais')
 
     XLSX.writeFile(wb, `zimvu-export-${MOIS[moisSelectionne].toLowerCase()}-${anneeSelectionnee}.xlsx`)
@@ -228,14 +310,14 @@ export default function Export() {
           </div>
         </div>
 
-        {/* Résumé */}
         {!loading && (
           <>
+            {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div className="bg-white rounded-2xl shadow p-4 text-center">
                 <p className="text-gray-500 text-sm mb-1">Chiffre d'affaires</p>
                 <p className="text-2xl font-bold text-blue-700">{totalCA.toFixed(2)} €</p>
-                <p className="text-xs text-gray-400 mt-1">{donnees.factures.filter(f => f.statut !== 'Annulée').length} facture(s)</p>
+                <p className="text-xs text-gray-400 mt-1">{donnees.factures.length} facture(s)</p>
               </div>
               <div className="bg-white rounded-2xl shadow p-4 text-center">
                 <p className="text-gray-500 text-sm mb-1">Total frais</p>
@@ -257,16 +339,12 @@ export default function Export() {
                 Exporter — {MOIS[moisSelectionne]} {anneeSelectionnee}
               </h3>
               <div className="flex gap-3 flex-wrap">
-                <button
-                  onClick={exporterPDF}
-                  disabled={exporting}
-                  className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
+                <button onClick={exporterPDF} disabled={exporting}
+                  className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl text-sm font-semibold">
                   📄 {exporting ? 'Export...' : 'Exporter en PDF'}
                 </button>
-                <button
-                  onClick={exporterExcel}
-                  disabled={exporting}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
+                <button onClick={exporterExcel} disabled={exporting}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl text-sm font-semibold">
                   📊 {exporting ? 'Export...' : 'Exporter en Excel'}
                 </button>
               </div>
@@ -275,7 +353,7 @@ export default function Export() {
             {/* Aperçu factures */}
             <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-4">
               <h3 className="text-sm font-semibold text-gray-600 mb-3">
-                Factures ({donnees.factures.length})
+                Factures ({donnees.factures.length}) — hors annulées
               </h3>
               {donnees.factures.length === 0 ? (
                 <p className="text-gray-400 text-sm">Aucune facture ce mois-ci</p>
@@ -289,9 +367,7 @@ export default function Export() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                          f.statut === 'Payée' ? 'bg-green-100 text-green-700' :
-                          f.statut === 'Annulée' ? 'bg-red-100 text-red-700' :
-                          'bg-yellow-100 text-yellow-700'
+                          f.statut === 'Payée' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                         }`}>{f.statut}</span>
                         <span className="font-semibold text-blue-700 text-sm">{Number(f.montant).toFixed(2)} €</span>
                       </div>
