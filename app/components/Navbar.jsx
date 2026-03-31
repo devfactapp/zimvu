@@ -12,7 +12,8 @@ export default function Navbar({ pageCourante }) {
     { label: 'Tableau de bord', href: '/dashboard' },
     { label: 'Clients', href: '/clients' },
     { label: 'Factures', href: '/factures' },
-    { label: 'Calculateur', href: '/dashboard/calculateur' },
+    { label: 'Devis', href: '/devis' },
+{ label: 'Calculateur', href: '/dashboard/calculateur' },
     { label: 'Mon profil', href: '/profil' },
   ]
 
