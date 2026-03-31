@@ -68,6 +68,73 @@ export default function Devis() {
     setConverting(null)
   }
 
+  const exporterPDF = async (devis) => {
+    const { default: jsPDF } = await import('jspdf')
+    const doc = new jsPDF()
+
+    doc.setFontSize(24)
+    doc.setTextColor(29, 78, 216)
+    doc.text('Zimvu', 20, 25)
+
+    doc.setFontSize(10)
+    doc.setTextColor(100, 100, 100)
+    doc.text('Votre outil de facturation intelligent', 20, 33)
+
+    doc.setDrawColor(29, 78, 216)
+    doc.setLineWidth(0.5)
+    doc.line(20, 38, 190, 38)
+
+    doc.setFontSize(18)
+    doc.setTextColor(30, 30, 30)
+    doc.text('DEVIS', 20, 52)
+
+    doc.setFontSize(10)
+    doc.setTextColor(100, 100, 100)
+    doc.text(`Date : ${devis.date}`, 20, 62)
+    doc.text(`Valide jusqu'au : ${devis.date_validite || 'Non défini'}`, 20, 70)
+    doc.text(`Statut : ${devis.statut}`, 20, 78)
+
+    doc.setFontSize(12)
+    doc.setTextColor(30, 30, 30)
+    doc.text('Informations client', 20, 93)
+    doc.setFontSize(10)
+    doc.setTextColor(60, 60, 60)
+    doc.text(`Nom : ${devis.client}`, 20, 101)
+    doc.text(`Email : ${devis.email || 'Non renseigné'}`, 20, 109)
+
+    doc.setFontSize(12)
+    doc.setTextColor(30, 30, 30)
+    doc.text('Détails de la prestation', 20, 124)
+
+    doc.setFillColor(245, 247, 250)
+    doc.rect(20, 130, 170, 30, 'F')
+    doc.setFontSize(10)
+    doc.setTextColor(60, 60, 60)
+    doc.text('Description', 25, 140)
+    doc.text('Montant', 155, 140)
+    doc.setDrawColor(200, 200, 200)
+    doc.line(20, 144, 190, 144)
+    doc.text(devis.description || '', 25, 154)
+    doc.setTextColor(29, 78, 216)
+    doc.text(`${devis.montant} €`, 155, 154)
+
+    doc.setDrawColor(29, 78, 216)
+    doc.line(20, 166, 190, 166)
+    doc.setFontSize(12)
+    doc.setTextColor(30, 30, 30)
+    doc.text('Total TTC', 130, 176)
+    doc.setFontSize(14)
+    doc.setTextColor(29, 78, 216)
+    doc.text(`${devis.montant} €`, 165, 176)
+
+    doc.setFontSize(9)
+    doc.setTextColor(150, 150, 150)
+    doc.text('Ce devis est valable jusqu\'à la date de validité indiquée.', 20, 240)
+    doc.text('Merci pour votre confiance — Zimvu.vercel.app', 20, 248)
+
+    doc.save(`devis-${devis.client}-${devis.date}.pdf`)
+  }
+
   const couleurStatut = (statut) => {
     switch (statut) {
       case 'Brouillon': return 'bg-gray-100 text-gray-600'
@@ -92,13 +159,11 @@ export default function Devis() {
               Le devis de <strong>{confirmSupprimer.client}</strong> ({confirmSupprimer.montant} €) sera supprimé définitivement.
             </p>
             <div className="flex gap-3">
-              <button
-                onClick={() => supprimerDevis(confirmSupprimer.id)}
+              <button onClick={() => supprimerDevis(confirmSupprimer.id)}
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg text-sm">
                 Supprimer
               </button>
-              <button
-                onClick={() => setConfirmSupprimer(null)}
+              <button onClick={() => setConfirmSupprimer(null)}
                 className="flex-1 border border-gray-300 text-gray-600 font-semibold py-2 rounded-lg text-sm">
                 Annuler
               </button>
@@ -150,10 +215,9 @@ export default function Devis() {
                         {d.statut}
                       </span>
                       <div className="flex gap-3">
+                        <span onClick={() => exporterPDF(d)} className="text-blue-600 cursor-pointer text-sm">PDF</span>
                         {d.statut !== 'Refusé' && (
-                          <span
-                            onClick={() => convertirEnFacture(d)}
-                            className="text-green-600 cursor-pointer text-sm font-medium">
+                          <span onClick={() => convertirEnFacture(d)} className="text-green-600 cursor-pointer text-sm font-medium">
                             {converting === d.id ? '...' : '→ Facture'}
                           </span>
                         )}
@@ -195,16 +259,13 @@ export default function Devis() {
                           </span>
                         </td>
                         <td className="px-6 py-4 flex gap-3 items-center">
+                          <span onClick={() => exporterPDF(d)} className="text-blue-600 cursor-pointer hover:underline text-sm">PDF</span>
                           {d.statut !== 'Refusé' && (
-                            <span
-                              onClick={() => convertirEnFacture(d)}
-                              className="text-green-600 cursor-pointer hover:underline text-sm font-medium">
+                            <span onClick={() => convertirEnFacture(d)} className="text-green-600 cursor-pointer hover:underline text-sm font-medium">
                               {converting === d.id ? 'Conversion...' : '→ Facture'}
                             </span>
                           )}
-                          <span
-                            onClick={() => setConfirmSupprimer(d)}
-                            className="text-red-500 cursor-pointer hover:underline text-sm">
+                          <span onClick={() => setConfirmSupprimer(d)} className="text-red-500 cursor-pointer hover:underline text-sm">
                             Supprimer
                           </span>
                         </td>
