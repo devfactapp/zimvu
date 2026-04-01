@@ -62,6 +62,7 @@ export default function Factures() {
 
     doc.setFontSize(10)
     doc.setTextColor(100, 100, 100)
+    if (facture.numero) doc.text(`N° : ${facture.numero}`, 130, 52)
     doc.text(`Date : ${facture.date}`, 20, 62)
     doc.text(`Statut : ${facture.statut}`, 20, 70)
 
@@ -102,7 +103,7 @@ export default function Factures() {
     doc.setTextColor(150, 150, 150)
     doc.text('Merci pour votre confiance — Zimvu.vercel.app', 20, 270)
 
-    doc.save(`facture-${facture.client}-${facture.date}.pdf`)
+    doc.save(`facture-${facture.numero || facture.client}-${facture.date}.pdf`)
   }
 
   return (
@@ -110,22 +111,19 @@ export default function Factures() {
 
       <Navbar pageCourante="/factures" />
 
-      {/* MODAL CONFIRMATION SUPPRESSION */}
       {confirmSupprimer && (
         <div style={{position:'fixed', inset:0, backgroundColor:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:'0 16px'}}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Supprimer la facture ?</h3>
             <p className="text-gray-500 text-sm mb-6">
-              La facture de <strong>{confirmSupprimer.client}</strong> ({confirmSupprimer.montant} €) sera supprimée définitivement.
+              La facture <strong>{confirmSupprimer.numero || confirmSupprimer.client}</strong> ({confirmSupprimer.montant} €) sera supprimée définitivement.
             </p>
             <div className="flex gap-3">
-              <button
-                onClick={() => supprimerFacture(confirmSupprimer.id)}
+              <button onClick={() => supprimerFacture(confirmSupprimer.id)}
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg text-sm">
                 Supprimer
               </button>
-              <button
-                onClick={() => setConfirmSupprimer(null)}
+              <button onClick={() => setConfirmSupprimer(null)}
                 className="flex-1 border border-gray-300 text-gray-600 font-semibold py-2 rounded-lg text-sm">
                 Annuler
               </button>
@@ -134,7 +132,6 @@ export default function Factures() {
         </div>
       )}
 
-      {/* CONTENU */}
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-700">Mes factures</h2>
@@ -150,14 +147,17 @@ export default function Factures() {
             <p className="text-gray-400 text-sm p-6">Aucune facture pour le moment</p>
           ) : (
             <>
-              {/* Vue mobile : cartes */}
+              {/* Vue mobile */}
               <div className="md:hidden divide-y divide-gray-100">
                 {factures.map((facture) => (
                   <div key={facture.id} className="p-4">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-gray-800">{facture.client}</span>
                       <span className="font-bold text-blue-700">{facture.montant} €</span>
                     </div>
+                    {facture.numero && (
+                      <p className="text-xs text-blue-600 font-medium mb-1">{facture.numero}</p>
+                    )}
                     <p className="text-gray-500 text-sm mb-1">{facture.description}</p>
                     <p className="text-gray-400 text-xs mb-3">{facture.date}</p>
                     <div className="flex items-center justify-between">
@@ -180,11 +180,12 @@ export default function Factures() {
                 ))}
               </div>
 
-              {/* Vue desktop : tableau */}
+              {/* Vue desktop */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">N°</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Client</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Description</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Date</th>
@@ -196,6 +197,7 @@ export default function Factures() {
                   <tbody>
                     {factures.map((facture) => (
                       <tr key={facture.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="px-6 py-4 text-blue-600 font-medium text-sm">{facture.numero || '—'}</td>
                         <td className="px-6 py-4 font-medium text-gray-800">{facture.client}</td>
                         <td className="px-6 py-4 text-gray-600">{facture.description}</td>
                         <td className="px-6 py-4 text-gray-600">{facture.date}</td>

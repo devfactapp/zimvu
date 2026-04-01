@@ -90,6 +90,7 @@ export default function Devis() {
 
     doc.setFontSize(10)
     doc.setTextColor(100, 100, 100)
+    if (devis.numero) doc.text(`N° : ${devis.numero}`, 130, 52)
     doc.text(`Date : ${devis.date}`, 20, 62)
     doc.text(`Valide jusqu'au : ${devis.date_validite || 'Non défini'}`, 20, 70)
     doc.text(`Statut : ${devis.statut}`, 20, 78)
@@ -132,7 +133,7 @@ export default function Devis() {
     doc.text('Ce devis est valable jusqu\'à la date de validité indiquée.', 20, 240)
     doc.text('Merci pour votre confiance — Zimvu.vercel.app', 20, 248)
 
-    doc.save(`devis-${devis.client}-${devis.date}.pdf`)
+    doc.save(`devis-${devis.numero || devis.client}-${devis.date}.pdf`)
   }
 
   const couleurStatut = (statut) => {
@@ -150,13 +151,12 @@ export default function Devis() {
 
       <Navbar pageCourante="/devis" />
 
-      {/* MODAL CONFIRMATION SUPPRESSION */}
       {confirmSupprimer && (
         <div style={{position:'fixed', inset:0, backgroundColor:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:'0 16px'}}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
             <h3 className="text-lg font-semibold text-gray-800 mb-2">Supprimer le devis ?</h3>
             <p className="text-gray-500 text-sm mb-6">
-              Le devis de <strong>{confirmSupprimer.client}</strong> ({confirmSupprimer.montant} €) sera supprimé définitivement.
+              Le devis <strong>{confirmSupprimer.numero || confirmSupprimer.client}</strong> ({confirmSupprimer.montant} €) sera supprimé définitivement.
             </p>
             <div className="flex gap-3">
               <button onClick={() => supprimerDevis(confirmSupprimer.id)}
@@ -172,12 +172,10 @@ export default function Devis() {
         </div>
       )}
 
-      {/* CONTENU */}
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-700">Mes devis</h2>
-          <button
-            onClick={() => router.push('/devis/nouveau')}
+          <button onClick={() => router.push('/devis/nouveau')}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
             + Nouveau devis
           </button>
@@ -189,22 +187,24 @@ export default function Devis() {
           ) : devis.length === 0 ? (
             <div className="p-8 text-center">
               <p className="text-gray-400 text-sm mb-4">Aucun devis pour le moment</p>
-              <button
-                onClick={() => router.push('/devis/nouveau')}
+              <button onClick={() => router.push('/devis/nouveau')}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium">
                 Créer mon premier devis
               </button>
             </div>
           ) : (
             <>
-              {/* Vue mobile : cartes */}
+              {/* Vue mobile */}
               <div className="md:hidden divide-y divide-gray-100">
                 {devis.map((d) => (
                   <div key={d.id} className="p-4">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-gray-800">{d.client}</span>
                       <span className="font-bold text-blue-700">{d.montant} €</span>
                     </div>
+                    {d.numero && (
+                      <p className="text-xs text-blue-600 font-medium mb-1">{d.numero}</p>
+                    )}
                     <p className="text-gray-500 text-sm mb-1">{d.description}</p>
                     <p className="text-gray-400 text-xs mb-3">Créé le {d.date} · Valide jusqu'au {d.date_validite || '—'}</p>
                     <div className="flex items-center justify-between">
@@ -228,11 +228,12 @@ export default function Devis() {
                 ))}
               </div>
 
-              {/* Vue desktop : tableau */}
+              {/* Vue desktop */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">N°</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Client</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Description</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Date</th>
@@ -245,6 +246,7 @@ export default function Devis() {
                   <tbody>
                     {devis.map((d) => (
                       <tr key={d.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="px-6 py-4 text-blue-600 font-medium text-sm">{d.numero || '—'}</td>
                         <td className="px-6 py-4 font-medium text-gray-800">{d.client}</td>
                         <td className="px-6 py-4 text-gray-600">{d.description}</td>
                         <td className="px-6 py-4 text-gray-600">{d.date}</td>
