@@ -21,8 +21,26 @@ export default function Home() {
   const [resetEnvoye, setResetEnvoye] = useState(false)
 
   const handleAuth = async () => {
-    setLoading(true)
     setError('')
+
+    // Validation des champs obligatoires
+    if (isSignUp) {
+      if (!prenom || !nom || !telephone || !email || !password) {
+        setError('Veuillez remplir tous les champs obligatoires (*)')
+        return
+      }
+      if (password.length < 6) {
+        setError('Le mot de passe doit contenir au moins 6 caractères')
+        return
+      }
+    } else {
+      if (!email || !password) {
+        setError('Veuillez renseigner votre email et mot de passe')
+        return
+      }
+    }
+
+    setLoading(true)
     if (isSignUp) {
       const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) {
