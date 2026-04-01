@@ -20,7 +20,39 @@ export default function Devis() {
       .select('*')
       .order('created_at', { ascending: false })
 
-    setDevis(data || [])
+    if (data) {
+      const aujourd_hui = new Date().toISOString().split('T')[0]
+      
+      // Mettre à jour les devis expirés automatiquement
+      const devisAExpirer = data.filter(d =>
+        d.date_validite &&
+        d.date_validite < aujourd_hui &&
+        d.statut !== 'Expiré' &&
+        d.statut !== 'Accepté' &&
+        d.statut !== 'Refusé'
+      )
+
+      if (devisAExpirer.length > 0) {
+        await Promise.all(devisAExpirer.map(d =>
+          supabase.from('devis').update({ statut: 'Expiré' }).eq('id', d.id)
+        ))
+      }
+
+      // Recharger avec les statuts mis à jour
+      const devisMisAJour = data.map(d => {
+        if (
+          d.date_validite &&
+          d.date_validite < aujourd_hui &&
+          d.statut !== 'Accepté' &&
+          d.statut !== 'Refusé'
+        ) {
+          return { ...d, statut: 'Expiré' }
+        }
+        return d
+      })
+
+      setDevis(devisMisAJour)
+    }
     setLoading(false)
   }, [router])
 
@@ -142,6 +174,7 @@ export default function Devis() {
       case 'Envoyé': return 'bg-blue-100 text-blue-700'
       case 'Accepté': return 'bg-green-100 text-green-700'
       case 'Refusé': return 'bg-red-100 text-red-700'
+case 'Expiré': return 'bg-orange-100 text-orange-700'
       default: return 'bg-gray-100 text-gray-600'
     }
   }
