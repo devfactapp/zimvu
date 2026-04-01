@@ -26,13 +26,14 @@ export default function Home() {
     if (isSignUp) {
       const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) {
-      if (error) {
-  if (error.message.includes('already registered') || error.message.includes('already exists') || error.message.includes('User already registered')) {
-    setError('Cet email est déjà utilisé. Connecte-toi ou utilise un autre email.')
-  } else {
-    setError(error.message)
-  }
-}
+        if (error.message.includes('already registered') || error.message.includes('already exists') || error.message.includes('User already registered')) {
+          setError('Cet email est déjà utilisé. Connecte-toi ou utilise un autre email.')
+        } else {
+          setError(error.message)
+        }
+      } else if (data?.user?.identities?.length === 0) {
+        setError('Cet email est déjà utilisé. Connecte-toi ou utilise un autre email.')
+      } else {
         if (data.user) {
           await supabase.from('profils').insert([{
             id: data.user.id,
@@ -195,7 +196,6 @@ export default function Home() {
               <span onClick={() => { setShowAuth(false); setMotDePasseOublie(false); setResetEnvoye(false) }} className="text-gray-400 cursor-pointer hover:text-gray-600 text-xl">✕</span>
             </div>
 
-            {/* Mode mot de passe oublié */}
             {motDePasseOublie ? (
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">Mot de passe oublié</h3>
@@ -204,8 +204,7 @@ export default function Home() {
                     <div className="text-4xl mb-4">📧</div>
                     <p className="text-green-600 font-medium mb-2">Email envoyé !</p>
                     <p className="text-gray-500 text-sm">Vérifie ta boîte mail et clique sur le lien pour réinitialiser ton mot de passe.</p>
-                    <button
-                      onClick={() => { setMotDePasseOublie(false); setResetEnvoye(false) }}
+                    <button onClick={() => { setMotDePasseOublie(false); setResetEnvoye(false) }}
                       className="mt-6 text-blue-600 text-sm cursor-pointer hover:underline">
                       Retour à la connexion
                     </button>
@@ -213,17 +212,11 @@ export default function Home() {
                 ) : (
                   <div className="space-y-4">
                     <p className="text-gray-500 text-sm mb-4">Entre ton email et on t'envoie un lien de réinitialisation.</p>
-                    <input
-                      type="email"
-                      placeholder="Adresse e-mail *"
-                      value={email}
+                    <input type="email" placeholder="Adresse e-mail *" value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                     {error && <p className="text-sm text-center text-red-500">{error}</p>}
-                    <button
-                      onClick={handleResetPassword}
-                      disabled={loading}
+                    <button onClick={handleResetPassword} disabled={loading}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">
                       {loading ? 'Envoi...' : 'Envoyer le lien'}
                     </button>
@@ -236,7 +229,6 @@ export default function Home() {
                 )}
               </div>
             ) : (
-              /* Mode connexion / inscription */
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-6">{isSignUp ? 'Créer un compte' : 'Se connecter'}</h3>
                 <div className="space-y-4">
@@ -272,8 +264,7 @@ export default function Home() {
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                   {!isSignUp && (
                     <p className="text-right">
-                      <span
-                        onClick={() => { setMotDePasseOublie(true); setError('') }}
+                      <span onClick={() => { setMotDePasseOublie(true); setError('') }}
                         className="text-blue-600 text-sm cursor-pointer hover:underline">
                         Mot de passe oublié ?
                       </span>
