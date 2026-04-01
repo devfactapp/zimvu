@@ -44,28 +44,33 @@ export default function Factures() {
     const { default: jsPDF } = await import('jspdf')
     const doc = new jsPDF()
 
+    const montantHT = Number(facture.montant_ht || facture.montant || 0)
+    const tauxTVA = Number(facture.tva_taux || 0)
+    const montantTVA = Number(facture.montant_tva || 0)
+    const montantTTC = Number(facture.montant || 0)
+
+    // En-tête
     doc.setFontSize(24)
     doc.setTextColor(29, 78, 216)
     doc.text('Zimvu', 20, 25)
-
     doc.setFontSize(10)
     doc.setTextColor(100, 100, 100)
     doc.text('Votre outil de facturation intelligent', 20, 33)
-
     doc.setDrawColor(29, 78, 216)
     doc.setLineWidth(0.5)
     doc.line(20, 38, 190, 38)
 
+    // Titre + numéro
     doc.setFontSize(18)
     doc.setTextColor(30, 30, 30)
     doc.text('FACTURE', 20, 52)
-
     doc.setFontSize(10)
     doc.setTextColor(100, 100, 100)
     if (facture.numero) doc.text(`N° : ${facture.numero}`, 130, 52)
     doc.text(`Date : ${facture.date}`, 20, 62)
     doc.text(`Statut : ${facture.statut}`, 20, 70)
 
+    // Client
     doc.setFontSize(12)
     doc.setTextColor(30, 30, 30)
     doc.text('Informations client', 20, 85)
@@ -74,41 +79,67 @@ export default function Factures() {
     doc.text(`Nom : ${facture.client}`, 20, 93)
     doc.text(`Email : ${facture.email || 'Non renseigné'}`, 20, 101)
 
+    // Prestation
     doc.setFontSize(12)
     doc.setTextColor(30, 30, 30)
-    doc.text('Détails de la prestation', 20, 120)
+    doc.text('Détails de la prestation', 20, 116)
 
     doc.setFillColor(245, 247, 250)
-    doc.rect(20, 126, 170, 30, 'F')
+    doc.rect(20, 122, 170, 30, 'F')
     doc.setFontSize(10)
     doc.setTextColor(60, 60, 60)
-    doc.text('Description', 25, 136)
-    doc.text('Montant', 155, 136)
+    doc.text('Description', 25, 132)
+    doc.text('Montant HT', 150, 132)
     doc.setDrawColor(200, 200, 200)
-    doc.line(20, 140, 190, 140)
-    doc.text(facture.description || '', 25, 150)
+    doc.line(20, 136, 190, 136)
+    doc.text(facture.description || '', 25, 146)
     doc.setTextColor(29, 78, 216)
-    doc.text(`${facture.montant} €`, 155, 150)
+    doc.text(`${montantHT.toFixed(2)} €`, 150, 146)
 
+    // Totaux
     doc.setDrawColor(29, 78, 216)
-    doc.line(20, 162, 190, 162)
-    doc.setFontSize(12)
-    doc.setTextColor(30, 30, 30)
-    doc.text('Total TTC', 130, 172)
-    doc.setFontSize(14)
-    doc.setTextColor(29, 78, 216)
-    doc.text(`${facture.montant} €`, 165, 172)
+    doc.line(20, 158, 190, 158)
 
+    let y = 168
+    doc.setFontSize(10)
+    doc.setTextColor(60, 60, 60)
+
+    doc.text('Montant HT', 120, y)
+    doc.setTextColor(30, 30, 30)
+    doc.text(`${montantHT.toFixed(2)} €`, 165, y)
+    y += 10
+
+    doc.setTextColor(60, 60, 60)
+    doc.text(`TVA (${tauxTVA}%)`, 120, y)
+    doc.setTextColor(30, 30, 30)
+    doc.text(`${montantTVA.toFixed(2)} €`, 165, y)
+    y += 10
+
+    doc.setFillColor(29, 78, 216)
+    doc.rect(115, y - 4, 75, 12, 'F')
+    doc.setFontSize(11)
+    doc.setTextColor(255, 255, 255)
+    doc.text('Total TTC', 120, y + 4)
+    doc.text(`${montantTTC.toFixed(2)} €`, 165, y + 4)
+    y += 18
+
+    // Mention TVA si 0%
+    if (tauxTVA === 0) {
+      doc.setFontSize(8)
+      doc.setTextColor(150, 150, 150)
+      doc.text('TVA non applicable — article 293 B du CGI', 20, y + 10)
+    }
+
+    // Footer
     doc.setFontSize(9)
     doc.setTextColor(150, 150, 150)
-    doc.text('Merci pour votre confiance — Zimvu.vercel.app', 20, 270)
+    doc.text('Merci pour votre confiance — Zimvu.vercel.app', 20, 280)
 
     doc.save(`facture-${facture.numero || facture.client}-${facture.date}.pdf`)
   }
 
   return (
     <div className="min-h-screen bg-gray-100">
-
       <Navbar pageCourante="/factures" />
 
       {confirmSupprimer && (
@@ -153,16 +184,20 @@ export default function Factures() {
                   <div key={facture.id} className="p-4">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-gray-800">{facture.client}</span>
-                      <span className="font-bold text-blue-700">{facture.montant} €</span>
+                      <span className="font-bold text-blue-700">{Number(facture.montant).toFixed(2)} €</span>
                     </div>
                     {facture.numero && (
                       <p className="text-xs text-blue-600 font-medium mb-1">{facture.numero}</p>
                     )}
                     <p className="text-gray-500 text-sm mb-1">{facture.description}</p>
-                    <p className="text-gray-400 text-xs mb-3">{facture.date}</p>
+                    <p className="text-gray-400 text-xs mb-1">{facture.date}</p>
+                    {facture.tva_taux > 0 && (
+                      <p className="text-gray-400 text-xs mb-3">
+                        HT : {Number(facture.montant_ht).toFixed(2)} € · TVA {facture.tva_taux}% : {Number(facture.montant_tva).toFixed(2)} €
+                      </p>
+                    )}
                     <div className="flex items-center justify-between">
-                      <span
-                        onClick={() => changerStatut(facture.id, facture.statut)}
+                      <span onClick={() => changerStatut(facture.id, facture.statut)}
                         title="Cliquer pour changer le statut"
                         className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer ${
                           facture.statut === "Payée" ? "bg-green-100 text-green-700" :
@@ -189,7 +224,9 @@ export default function Factures() {
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Client</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Description</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Date</th>
-                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Montant</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">HT</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">TVA</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">TTC</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Statut</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Actions</th>
                     </tr>
@@ -201,10 +238,11 @@ export default function Factures() {
                         <td className="px-6 py-4 font-medium text-gray-800">{facture.client}</td>
                         <td className="px-6 py-4 text-gray-600">{facture.description}</td>
                         <td className="px-6 py-4 text-gray-600">{facture.date}</td>
-                        <td className="px-6 py-4 font-semibold text-blue-700">{facture.montant} €</td>
+                        <td className="px-6 py-4 text-gray-600">{Number(facture.montant_ht || facture.montant).toFixed(2)} €</td>
+                        <td className="px-6 py-4 text-gray-600">{facture.tva_taux > 0 ? `${facture.tva_taux}%` : '—'}</td>
+                        <td className="px-6 py-4 font-semibold text-blue-700">{Number(facture.montant).toFixed(2)} €</td>
                         <td className="px-6 py-4">
-                          <span
-                            onClick={() => changerStatut(facture.id, facture.statut)}
+                          <span onClick={() => changerStatut(facture.id, facture.statut)}
                             title="Cliquer pour changer le statut"
                             className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer hover:opacity-75 ${
                               facture.statut === "Payée" ? "bg-green-100 text-green-700" :
