@@ -22,8 +22,6 @@ export default function Home() {
 
   const handleAuth = async () => {
     setError('')
-
-    // Validation des champs obligatoires
     if (isSignUp) {
       if (!prenom || !nom || !telephone || !email || !password) {
         setError('Veuillez remplir tous les champs obligatoires (*)')
@@ -103,6 +101,10 @@ export default function Home() {
       <nav className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
         <h1 className="text-2xl font-bold text-blue-700">Zimvu</h1>
         <div className="flex items-center gap-4">
+          <span onClick={() => router.push('/beta')}
+            className="text-blue-600 cursor-pointer text-sm font-medium border border-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-50">
+            🧪 Bêta gratuite
+          </span>
           <span onClick={() => { setShowAuth(true); setIsSignUp(false); setMotDePasseOublie(false); setResetEnvoye(false) }}
             className="text-gray-600 cursor-pointer hover:text-blue-600 text-sm font-medium">
             Se connecter
@@ -120,19 +122,23 @@ export default function Home() {
           🚀 L'outil de facturation pour auto-entrepreneurs
         </div>
         <h2 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
-          Gérez vos factures<br />
-          <span className="text-blue-700">simplement et rapidement</span>
+          Créez vos devis et factures<br />
+          <span className="text-blue-700">sans vous perdre dans un logiciel compliqué</span>
         </h2>
         <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto">
-          Zimvu est l'outil de facturation pensé pour les auto-entrepreneurs. Créez des factures professionnelles, gérez vos clients et suivez vos revenus en temps réel.
+          Zimvu est l'outil simple pour créer ses devis, factures et suivre ses frais — pensé pour les indépendants, freelances et auto-entrepreneurs français.
         </p>
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <button onClick={() => { setShowAuth(true); setIsSignUp(true) }}
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold">
             Commencer gratuitement →
           </button>
-          <span className="text-gray-400 text-sm">Pas de carte bancaire requise</span>
+          <span onClick={() => router.push('/beta')}
+            className="text-blue-600 cursor-pointer text-sm font-medium hover:underline">
+            Rejoindre la bêta gratuite 🧪
+          </span>
         </div>
+        <p className="text-gray-400 text-sm mt-4">Pas de carte bancaire requise</p>
       </div>
 
       {/* Fonctionnalités */}
@@ -141,8 +147,8 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-blue-50 rounded-2xl p-6">
             <div className="text-3xl mb-4">📄</div>
-            <h4 className="text-lg font-semibold text-gray-800 mb-2">Factures professionnelles</h4>
-            <p className="text-gray-500 text-sm">Créez des factures en quelques secondes et exportez-les en PDF.</p>
+            <h4 className="text-lg font-semibold text-gray-800 mb-2">Factures & Devis</h4>
+            <p className="text-gray-500 text-sm">Créez des documents professionnels en quelques secondes et exportez-les en PDF.</p>
           </div>
           <div className="bg-blue-50 rounded-2xl p-6">
             <div className="text-3xl mb-4">👥</div>
@@ -155,14 +161,14 @@ export default function Home() {
             <p className="text-gray-500 text-sm">Suivez votre chiffre d'affaires et vos factures en temps réel.</p>
           </div>
           <div className="bg-blue-50 rounded-2xl p-6">
-            <div className="text-3xl mb-4">💰</div>
-            <h4 className="text-lg font-semibold text-gray-800 mb-2">Prix imbattable</h4>
-            <p className="text-gray-500 text-sm">Seulement 4,99€/mois. Moins cher que tous les concurrents.</p>
+            <div className="text-3xl mb-4">🧾</div>
+            <h4 className="text-lg font-semibold text-gray-800 mb-2">Notes de frais</h4>
+            <p className="text-gray-500 text-sm">Suivez vos dépenses par catégorie et exportez votre comptabilité.</p>
           </div>
           <div className="bg-blue-50 rounded-2xl p-6">
-            <div className="text-3xl mb-4">🔒</div>
-            <h4 className="text-lg font-semibold text-gray-800 mb-2">Sécurisé</h4>
-            <p className="text-gray-500 text-sm">Vos données sont protégées et sauvegardées automatiquement.</p>
+            <div className="text-3xl mb-4">🧮</div>
+            <h4 className="text-lg font-semibold text-gray-800 mb-2">Calculateur cotisations</h4>
+            <p className="text-gray-500 text-sm">Estimez vos charges sociales avec les taux officiels 2025.</p>
           </div>
           <div className="bg-blue-50 rounded-2xl p-6">
             <div className="text-3xl mb-4">📱</div>
@@ -174,23 +180,52 @@ export default function Home() {
 
       {/* Prix */}
       <div className="bg-blue-50 py-16">
-        <div className="max-w-md mx-auto px-6 text-center">
+        <div className="max-w-3xl mx-auto px-6 text-center">
           <h3 className="text-3xl font-bold text-gray-900 mb-4">Un prix simple et transparent</h3>
-          <div className="bg-white rounded-2xl shadow-lg p-8 mt-8">
-            <p className="text-gray-500 mb-2">Par mois</p>
-            <p className="text-6xl font-bold text-blue-700 mb-2">4,99€</p>
-            <p className="text-gray-400 text-sm mb-6">Tout inclus, sans surprise</p>
-            <ul className="text-left space-y-3 mb-8">
-              <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Factures illimitées</li>
-              <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Clients illimités</li>
-              <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Export PDF</li>
-              <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Tableau de bord</li>
-              <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Support client</li>
-            </ul>
-            <button onClick={() => { setShowAuth(true); setIsSignUp(true) }}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold">
-              Commencer gratuitement
-            </button>
+          <p className="text-gray-500 mb-10">Commencez gratuitement, passez au Pro quand vous êtes prêt.</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Plan Gratuit */}
+            <div className="bg-white rounded-2xl shadow p-8 text-left">
+              <p className="text-gray-500 text-sm font-medium mb-2">GRATUIT</p>
+              <p className="text-5xl font-bold text-gray-900 mb-1">0€</p>
+              <p className="text-gray-400 text-sm mb-6">Pour démarrer</p>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> 3 factures / mois</li>
+                <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> 3 devis / mois</li>
+                <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Gestion clients</li>
+                <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Calculateur cotisations</li>
+                <li className="flex items-center gap-2 text-gray-400 line-through">Export PDF illimité</li>
+                <li className="flex items-center gap-2 text-gray-400 line-through">Notes de frais</li>
+              </ul>
+              <button onClick={() => { setShowAuth(true); setIsSignUp(true) }}
+                className="w-full border border-blue-600 text-blue-600 hover:bg-blue-50 py-3 rounded-xl font-semibold">
+                Commencer gratuitement
+              </button>
+            </div>
+
+            {/* Plan Pro */}
+            <div className="bg-blue-600 rounded-2xl shadow p-8 text-left relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full">
+                ⭐ RECOMMANDÉ
+              </div>
+              <p className="text-blue-200 text-sm font-medium mb-2">PRO</p>
+              <p className="text-5xl font-bold text-white mb-1">9€</p>
+              <p className="text-blue-200 text-sm mb-6">par mois · sans engagement</p>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-2 text-white"><span className="text-green-300">✓</span> Factures illimitées</li>
+                <li className="flex items-center gap-2 text-white"><span className="text-green-300">✓</span> Devis illimités</li>
+                <li className="flex items-center gap-2 text-white"><span className="text-green-300">✓</span> Clients illimités</li>
+                <li className="flex items-center gap-2 text-white"><span className="text-green-300">✓</span> Export PDF + Excel</li>
+                <li className="flex items-center gap-2 text-white"><span className="text-green-300">✓</span> Notes de frais</li>
+                <li className="flex items-center gap-2 text-white"><span className="text-green-300">✓</span> Agenda + Relances auto</li>
+                <li className="flex items-center gap-2 text-white"><span className="text-green-300">✓</span> Support prioritaire</li>
+              </ul>
+              <button onClick={() => { setShowAuth(true); setIsSignUp(true) }}
+                className="w-full bg-white text-blue-600 hover:bg-blue-50 py-3 rounded-xl font-semibold">
+                Essayer gratuitement
+              </button>
+            </div>
           </div>
         </div>
       </div>
