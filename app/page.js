@@ -101,10 +101,6 @@ export default function Home() {
       <nav className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
         <h1 className="text-2xl font-bold text-blue-700">Zimvu</h1>
         <div className="flex items-center gap-4">
-          <span onClick={() => router.push('/beta')}
-            className="text-blue-600 cursor-pointer text-sm font-medium border border-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-50">
-            🧪 Bêta gratuite
-          </span>
           <span onClick={() => { setShowAuth(true); setIsSignUp(false); setMotDePasseOublie(false); setResetEnvoye(false) }}
             className="text-gray-600 cursor-pointer hover:text-blue-600 text-sm font-medium">
             Se connecter
@@ -133,10 +129,6 @@ export default function Home() {
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold">
             Commencer gratuitement →
           </button>
-          <span onClick={() => router.push('/beta')}
-            className="text-blue-600 cursor-pointer text-sm font-medium hover:underline">
-            Rejoindre la bêta gratuite 🧪
-          </span>
         </div>
         <p className="text-gray-400 text-sm mt-4">Pas de carte bancaire requise</p>
       </div>
