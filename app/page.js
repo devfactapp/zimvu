@@ -26,8 +26,13 @@ export default function Home() {
     if (isSignUp) {
       const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) {
-        setError(error.message)
-      } else {
+      if (error) {
+  if (error.message.includes('already registered') || error.message.includes('already exists') || error.message.includes('User already registered')) {
+    setError('Cet email est déjà utilisé. Connecte-toi ou utilise un autre email.')
+  } else {
+    setError(error.message)
+  }
+}
         if (data.user) {
           await supabase.from('profils').insert([{
             id: data.user.id,

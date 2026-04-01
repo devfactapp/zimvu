@@ -36,7 +36,7 @@ export default function Dashboard() {
         const enAttente = factures.filter(f => f.statut === 'En attente').length
         setStats({
           chiffreAffaires: total,
-          facturesEnvoyees: factures.length,
+          facturesEnvoyees: factures.filter(f => f.statut !== 'Annulée').length,
           facturesEnAttente: enAttente,
           nombreClients: clients?.length || 0,
         })
