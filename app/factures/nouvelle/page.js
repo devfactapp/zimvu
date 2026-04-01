@@ -2,6 +2,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../supabase'
+import Navbar from '../../components/Navbar'
+
+const TAUX_TVA = [
+  { label: 'Sans TVA (auto-entrepreneur)', value: 0 },
+  { label: '5,5% — Taux réduit', value: 5.5 },
+  { label: '10% — Taux intermédiaire', value: 10 },
+  { label: '20% — Taux normal', value: 20 },
+]
 
 export default function NouvelleFacture() {
   const router = useRouter()
@@ -9,33 +17,45 @@ export default function NouvelleFacture() {
     client: '',
     email: '',
     description: '',
-    montant: '',
+    montant_ht: '',
+    tva_taux: 0,
     date: new Date().toISOString().split('T')[0],
   })
+  const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [numeroFacture, setNumeroFacture] = useState('')
 
   useEffect(() => {
-    const genererNumero = async () => {
-      const { data } = await supabase
-        .from('factures')
-        .select('id')
-        .order('id', { ascending: false })
-        .limit(1)
-
-      const annee = new Date().getFullYear()
-      const numero = data && data.length > 0 ? data[0].id + 1 : 1
-      setNumeroFacture(`F-${annee}-${String(numero).padStart(3, '0')}`)
+    const fetchClients = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { router.push('/'); return }
+      const { data } = await supabase.from('clients').select('*').order('nom')
+      setClients(data || [])
     }
-    genererNumero()
+    fetchClients()
   }, [])
 
   const handleChange = (e) => {
     setFacture({ ...facture, [e.target.name]: e.target.value })
   }
 
+  const handleClientChange = (e) => {
+    const nomClient = e.target.value
+    const clientTrouve = clients.find(c => c.nom === nomClient)
+    setFacture({ ...facture, client: nomClient, email: clientTrouve?.email || facture.email })
+  }
+
+  // Calculs automatiques
+  const montantHT = parseFloat(facture.montant_ht) || 0
+  const tauxTVA = parseFloat(facture.tva_taux) || 0
+  const montantTVA = (montantHT * tauxTVA) / 100
+  const montantTTC = montantHT + montantTVA
+
   const creerFacture = async () => {
+    if (!facture.client || !facture.montant_ht || !facture.date) {
+      setError('Veuillez remplir les champs obligatoires')
+      return
+    }
     setLoading(true)
     setError('')
 
@@ -46,11 +66,13 @@ export default function NouvelleFacture() {
       client: facture.client,
       email: facture.email,
       description: facture.description,
-      montant: facture.montant,
+      montant_ht: montantHT,
+      tva_taux: tauxTVA,
+      montant_tva: montantTVA,
+      montant: montantTTC,
       date: facture.date,
       statut: 'En attente',
       user_id: session.user.id,
-      numero: numeroFacture,
     }])
 
     if (error) setError('Erreur lors de la création')
@@ -61,32 +83,33 @@ export default function NouvelleFacture() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-blue-700 cursor-pointer" onClick={() => router.push('/dashboard')}>Zimvu</h1>
-        <div className="flex items-center gap-6">
-          <span onClick={() => router.push('/dashboard')} className="text-gray-600 cursor-pointer hover:text-blue-600">Tableau de bord</span>
-          <span onClick={() => router.push('/clients')} className="text-gray-600 cursor-pointer hover:text-blue-600">Clients</span>
-          <span onClick={() => router.push('/factures')} className="text-blue-600 font-semibold cursor-pointer">Factures</span>
-        </div>
-      </nav>
+      <Navbar pageCourante="/factures" />
 
       <div className="max-w-3xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-700">Nouvelle facture</h2>
-            {numeroFacture && <p className="text-blue-600 font-semibold text-sm mt-1">Numéro : {numeroFacture}</p>}
-          </div>
+          <h2 className="text-xl font-semibold text-gray-700">Nouvelle facture</h2>
           <button onClick={() => router.push('/factures')} className="text-gray-500 hover:text-gray-700 text-sm">← Retour</button>
         </div>
 
         <div className="bg-white rounded-2xl shadow p-8 space-y-6">
+
+          {/* Informations client */}
           <div>
             <h3 className="text-lg font-semibold text-gray-700 mb-4">Informations client</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">Nom du client</label>
-                <input name="client" value={facture.client} onChange={handleChange} placeholder="Jean Dupont"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <label className="block text-sm font-medium text-gray-600 mb-1">Nom du client *</label>
+                <input
+                  list="liste-clients"
+                  name="client"
+                  value={facture.client}
+                  onChange={handleClientChange}
+                  placeholder="Jean Dupont"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <datalist id="liste-clients">
+                  {clients.map(c => <option key={c.id} value={c.nom} />)}
+                </datalist>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-600 mb-1">Email client</label>
@@ -96,6 +119,7 @@ export default function NouvelleFacture() {
             </div>
           </div>
 
+          {/* Détails prestation */}
           <div>
             <h3 className="text-lg font-semibold text-gray-700 mb-4">Détails de la prestation</h3>
             <div className="space-y-4">
@@ -103,22 +127,56 @@ export default function NouvelleFacture() {
                 <label className="block text-sm font-medium text-gray-600 mb-1">Description</label>
                 <textarea name="description" value={facture.description} onChange={handleChange}
                   placeholder="Description de la prestation..." rows={3}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Montant (€)</label>
-                  <input name="montant" value={facture.montant} onChange={handleChange} placeholder="0.00" type="number"
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Montant HT (€) *</label>
+                  <input name="montant_ht" value={facture.montant_ht} onChange={handleChange}
+                    placeholder="0.00" type="number" step="0.01"
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 mb-1">Date</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Taux TVA</label>
+                  <select name="tva_taux" value={facture.tva_taux} onChange={handleChange}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    {TAUX_TVA.map(t => (
+                      <option key={t.value} value={t.value}>{t.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Date *</label>
                   <input name="date" value={facture.date} onChange={handleChange} type="date"
                     className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Récapitulatif montants */}
+          {montantHT > 0 && (
+            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+              <h3 className="text-sm font-semibold text-gray-600 mb-3">Récapitulatif</h3>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Montant HT</span>
+                <span className="font-medium text-gray-800">{montantHT.toFixed(2)} €</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">TVA ({tauxTVA}%)</span>
+                <span className="font-medium text-gray-800">{montantTVA.toFixed(2)} €</span>
+              </div>
+              <div className="flex justify-between text-sm font-semibold border-t border-gray-200 pt-2 mt-2">
+                <span className="text-gray-700">Total TTC</span>
+                <span className="text-blue-700 text-lg">{montantTTC.toFixed(2)} €</span>
+              </div>
+              {tauxTVA === 0 && (
+                <p className="text-xs text-gray-400 mt-2 italic">
+                  TVA non applicable — article 293 B du CGI
+                </p>
+              )}
+            </div>
+          )}
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
