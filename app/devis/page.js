@@ -70,6 +70,9 @@ export default function Devis() {
       client: devis.client,
       email: devis.email,
       description: devis.description,
+      montant_ht: devis.montant_ht || devis.montant,
+      tva_taux: devis.tva_taux || 0,
+      montant_tva: devis.montant_tva || 0,
       montant: devis.montant,
       date: new Date().toISOString().split('T')[0],
       statut: 'En attente',
@@ -103,13 +106,20 @@ export default function Devis() {
     doc.setFontSize(12); doc.setTextColor(30, 30, 30); doc.text('Détails de la prestation', 20, 124)
     doc.setFillColor(245, 247, 250); doc.rect(20, 130, 170, 30, 'F')
     doc.setFontSize(10); doc.setTextColor(60, 60, 60)
-    doc.text('Description', 25, 140); doc.text('Montant', 155, 140)
-    doc.setDrawColor(200, 200, 200); doc.line(20, 144, 190, 144)
-    doc.text(devis.description || '', 25, 154)
-    doc.setTextColor(29, 78, 216); doc.text(`${devis.montant} €`, 155, 154)
-    doc.setDrawColor(29, 78, 216); doc.line(20, 166, 190, 166)
-    doc.setFontSize(12); doc.setTextColor(30, 30, 30); doc.text('Total TTC', 130, 176)
-    doc.setFontSize(14); doc.setTextColor(29, 78, 216); doc.text(`${devis.montant} €`, 165, 176)
+    doc.text('Description', 25, 140); doc.text('Montant HT', 150, 140)
+doc.setDrawColor(200, 200, 200); doc.line(20, 144, 190, 144)
+doc.text(devis.description || '', 25, 154)
+doc.setTextColor(29, 78, 216); doc.text(`${Number(devis.montant_ht || devis.montant).toFixed(2)} €`, 150, 154)
+doc.setDrawColor(29, 78, 216); doc.line(20, 166, 190, 166)
+let y = 176
+doc.setFontSize(10); doc.setTextColor(60, 60, 60); doc.text('Montant HT', 120, y)
+doc.setTextColor(30, 30, 30); doc.text(`${Number(devis.montant_ht || devis.montant).toFixed(2)} €`, 165, y); y += 10
+doc.setTextColor(60, 60, 60); doc.text(`TVA (${devis.tva_taux || 0}%)`, 120, y)
+doc.setTextColor(30, 30, 30); doc.text(`${Number(devis.montant_tva || 0).toFixed(2)} €`, 165, y); y += 10
+doc.setFillColor(29, 78, 216); doc.rect(115, y - 4, 75, 12, 'F')
+doc.setFontSize(11); doc.setTextColor(255, 255, 255)
+doc.text('Total TTC', 120, y + 4); doc.text(`${Number(devis.montant).toFixed(2)} €`, 165, y + 4)
+if (devis.tva_taux === 0) { doc.setFontSize(8); doc.setTextColor(150, 150, 150); doc.text('TVA non applicable — article 293 B du CGI', 20, y + 20) }
     doc.setFontSize(9); doc.setTextColor(150, 150, 150)
     doc.text('Ce devis est valable jusqu\'à la date de validité indiquée.', 20, 240)
     doc.text('Merci pour votre confiance — Zimvu.vercel.app', 20, 248)
