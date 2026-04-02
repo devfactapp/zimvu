@@ -246,7 +246,9 @@ export default function Devis() {
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Description</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Date</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Validité</th>
-                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Montant</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">HT</th>
+<th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">TVA</th>
+<th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">TTC</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Statut</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Actions</th>
                     </tr>
@@ -259,7 +261,9 @@ export default function Devis() {
                         <td className="px-6 py-4 text-gray-600">{d.description}</td>
                         <td className="px-6 py-4 text-gray-600">{d.date}</td>
                         <td className="px-6 py-4 text-gray-600">{d.date_validite || '—'}</td>
-                        <td className="px-6 py-4 font-semibold text-blue-700">{d.montant} €</td>
+                        <td className="px-6 py-4 text-gray-600">{Number(d.montant_ht || d.montant).toFixed(2)} €</td>
+<td className="px-6 py-4 text-gray-600">{d.tva_taux > 0 ? `${d.tva_taux}%` : '—'}</td>
+<td className="px-6 py-4 font-semibold text-blue-700">{Number(d.montant).toFixed(2)} €</td>
                         <td className="px-6 py-4">
                           <span onClick={() => changerStatut(d.id, d.statut)}
                             className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer hover:opacity-75 ${couleurStatut(d.statut)}`}>
