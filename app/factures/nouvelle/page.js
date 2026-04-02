@@ -24,13 +24,26 @@ export default function NouvelleFacture() {
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [limitAtteinte, setLimitAtteinte] = useState(false)
+  const [nbFactures, setNbFactures] = useState(0)
 
   useEffect(() => {
     const fetchClients = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
-      const { data } = await supabase.from('clients').select('*').order('nom')
-      setClients(data || [])
+
+      const { data: clientsData } = await supabase.from('clients').select('*').order('nom')
+      setClients(clientsData || [])
+
+      // Vérifier la limite du plan gratuit
+      const { data: factures } = await supabase
+        .from('factures')
+        .select('id')
+        .eq('user_id', session.user.id)
+
+      const nb = factures?.length || 0
+      setNbFactures(nb)
+      if (nb >= 3) setLimitAtteinte(true)
     }
     fetchClients()
   }, [])
@@ -45,13 +58,13 @@ export default function NouvelleFacture() {
     setFacture({ ...facture, client: nomClient, email: clientTrouve?.email || facture.email })
   }
 
-  // Calculs automatiques
   const montantHT = parseFloat(facture.montant_ht) || 0
   const tauxTVA = parseFloat(facture.tva_taux) || 0
   const montantTVA = (montantHT * tauxTVA) / 100
   const montantTTC = montantHT + montantTVA
 
   const creerFacture = async () => {
+    if (limitAtteinte) return
     if (!facture.client || !facture.montant_ht || !facture.date) {
       setError('Veuillez remplir les champs obligatoires')
       return
@@ -91,7 +104,36 @@ export default function NouvelleFacture() {
           <button onClick={() => router.push('/factures')} className="text-gray-500 hover:text-gray-700 text-sm">← Retour</button>
         </div>
 
-        <div className="bg-white rounded-2xl shadow p-8 space-y-6">
+        {/* Bannière limite atteinte */}
+        {limitAtteinte && (
+          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 mb-6 text-center">
+            <div className="text-3xl mb-3">🔒</div>
+            <h3 className="text-lg font-semibold text-orange-700 mb-2">Limite du plan gratuit atteinte</h3>
+            <p className="text-orange-600 text-sm mb-4">
+              Vous avez utilisé vos <strong>3 factures gratuites</strong>. Passez au plan Pro pour créer des factures illimitées.
+            </p>
+            <button
+              onClick={() => router.push('/profil')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold text-sm">
+              🚀 Passer au Pro — 9€/mois
+            </button>
+          </div>
+        )}
+
+        {/* Compteur */}
+        {!limitAtteinte && (
+          <div className="bg-blue-50 rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
+            <p className="text-blue-700 text-sm">
+              Plan gratuit : <strong>{nbFactures}/3 factures</strong> utilisées
+            </p>
+            <span onClick={() => router.push('/profil')}
+              className="text-blue-600 text-xs cursor-pointer hover:underline font-medium">
+              Passer au Pro →
+            </span>
+          </div>
+        )}
+
+        <div className={`bg-white rounded-2xl shadow p-8 space-y-6 ${limitAtteinte ? 'opacity-50 pointer-events-none' : ''}`}>
 
           {/* Informations client */}
           <div>
@@ -154,7 +196,7 @@ export default function NouvelleFacture() {
             </div>
           </div>
 
-          {/* Récapitulatif montants */}
+          {/* Récapitulatif */}
           {montantHT > 0 && (
             <div className="bg-gray-50 rounded-xl p-4 space-y-2">
               <h3 className="text-sm font-semibold text-gray-600 mb-3">Récapitulatif</h3>
@@ -185,8 +227,8 @@ export default function NouvelleFacture() {
               className="flex-1 border border-gray-300 text-gray-600 py-3 rounded-lg hover:bg-gray-50">
               Annuler
             </button>
-            <button onClick={creerFacture} disabled={loading}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">
+            <button onClick={creerFacture} disabled={loading || limitAtteinte}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 rounded-lg">
               {loading ? 'Création...' : 'Créer la facture'}
             </button>
           </div>
