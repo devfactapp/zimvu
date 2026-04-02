@@ -11,6 +11,7 @@ export default function Factures() {
   const [confirmSupprimer, setConfirmSupprimer] = useState(null)
   const [menuOuvert, setMenuOuvert] = useState(null)
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
+  const [recherche, setRecherche] = useState('')
   const menuRef = useRef(null)
 
   const fetchFactures = useCallback(async () => {
@@ -38,15 +39,9 @@ export default function Factures() {
 
   const ouvrirMenu = (e, id) => {
     e.stopPropagation()
-    if (menuOuvert === id) {
-      setMenuOuvert(null)
-      return
-    }
+    if (menuOuvert === id) { setMenuOuvert(null); return }
     const rect = e.currentTarget.getBoundingClientRect()
-    setMenuPosition({
-      top: rect.bottom + 4,
-left: rect.left,
-    })
+    setMenuPosition({ top: rect.bottom + 4, left: rect.left })
     setMenuOuvert(id)
   }
 
@@ -108,33 +103,31 @@ left: rect.left,
   }
 
   const factureSelectionnee = factures.find(f => f.id === menuOuvert)
+  const facturesFiltrees = factures.filter(f =>
+    f.client?.toLowerCase().includes(recherche.toLowerCase()) ||
+    f.numero?.toLowerCase().includes(recherche.toLowerCase()) ||
+    f.description?.toLowerCase().includes(recherche.toLowerCase())
+  )
 
   return (
     <div className="min-h-screen bg-gray-100" onClick={() => setMenuOuvert(null)}>
       <Navbar pageCourante="/factures" />
 
-      {/* Menu contextuel */}
       {menuOuvert && factureSelectionnee && (
-        <div
-          ref={menuRef}
-          className="fixed bg-white rounded-2xl z-50 overflow-hidden"
+        <div ref={menuRef} className="fixed bg-white rounded-2xl z-50 overflow-hidden"
           onClick={(e) => e.stopPropagation()}
           style={{
-            top: menuPosition.top,
-            left: menuPosition.left,
-            minWidth: '180px',
+            top: menuPosition.top, left: menuPosition.left, minWidth: '180px',
             boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 4px 20px rgba(0,0,0,0.1)',
             border: '1px solid rgba(0,0,0,0.06)'
           }}>
           <div className="p-1">
-            <button
-              onClick={() => exporterPDF(factureSelectionnee)}
+            <button onClick={() => exporterPDF(factureSelectionnee)}
               className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl flex items-center gap-3 transition-colors">
               <span>📄</span> Télécharger PDF
             </button>
             <div className="h-px bg-gray-100 mx-2" />
-            <button
-              onClick={() => { setConfirmSupprimer(factureSelectionnee); setMenuOuvert(null) }}
+            <button onClick={() => { setConfirmSupprimer(factureSelectionnee); setMenuOuvert(null) }}
               className="w-full text-left px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-3 transition-colors">
               <span>🗑️</span> Supprimer
             </button>
@@ -164,36 +157,44 @@ left: rect.left,
       )}
 
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
           <h2 className="text-xl font-semibold text-gray-700">Mes factures</h2>
-          <button onClick={() => router.push('/factures/nouvelle')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-            + Nouvelle
-          </button>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              placeholder="🔍 Rechercher client, n°..."
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
+            />
+            <button onClick={() => router.push('/factures/nouvelle')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+              + Nouvelle
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow overflow-hidden">
           {loading ? (
             <p className="text-gray-400 text-sm p-6">Chargement...</p>
-          ) : factures.length === 0 ? (
-            <p className="text-gray-400 text-sm p-6">Aucune facture pour le moment</p>
+          ) : facturesFiltrees.length === 0 ? (
+            <p className="text-gray-400 text-sm p-6">
+              {recherche ? 'Aucune facture trouvée' : 'Aucune facture pour le moment'}
+            </p>
           ) : (
             <>
               {/* Vue mobile */}
               <div className="md:hidden divide-y divide-gray-100">
-                {factures.map((facture) => (
+                {facturesFiltrees.map((facture) => (
                   <div key={facture.id} className="p-4">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-gray-800">{facture.client}</span>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-blue-700">{Number(facture.montant).toFixed(2)} €</span>
-                        <button
-                          onClick={(e) => ouvrirMenu(e, facture.id)}
+                        <button onClick={(e) => ouvrirMenu(e, facture.id)}
                           className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-lg transition-colors ${
                             menuOuvert === facture.id ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                          }`}>
-                          ···
-                        </button>
+                          }`}>···</button>
                       </div>
                     </div>
                     {facture.numero && <p className="text-xs text-blue-600 font-medium mb-1">{facture.numero}</p>}
@@ -209,9 +210,7 @@ left: rect.left,
                         facture.statut === "Payée" ? "bg-green-100 text-green-700" :
                         facture.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
                         "bg-red-100 text-red-700"
-                      }`}>
-                      {facture.statut}
-                    </span>
+                      }`}>{facture.statut}</span>
                   </div>
                 ))}
               </div>
@@ -233,7 +232,7 @@ left: rect.left,
                     </tr>
                   </thead>
                   <tbody>
-                    {factures.map((facture) => (
+                    {facturesFiltrees.map((facture) => (
                       <tr key={facture.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="px-6 py-4 text-blue-600 font-medium text-sm">{facture.numero || '—'}</td>
                         <td className="px-6 py-4 font-medium text-gray-800">{facture.client}</td>
@@ -248,18 +247,13 @@ left: rect.left,
                               facture.statut === "Payée" ? "bg-green-100 text-green-700" :
                               facture.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
                               "bg-red-100 text-red-700"
-                            }`}>
-                            {facture.statut}
-                          </span>
+                            }`}>{facture.statut}</span>
                         </td>
                         <td className="px-6 py-4">
-                          <button
-                            onClick={(e) => ouvrirMenu(e, facture.id)}
+                          <button onClick={(e) => ouvrirMenu(e, facture.id)}
                             className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-lg transition-colors ${
                               menuOuvert === facture.id ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                            }`}>
-                            ···
-                          </button>
+                            }`}>···</button>
                         </td>
                       </tr>
                     ))}
