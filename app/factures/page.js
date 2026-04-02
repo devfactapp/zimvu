@@ -12,6 +12,7 @@ export default function Factures() {
   const [menuOuvert, setMenuOuvert] = useState(null)
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
   const [recherche, setRecherche] = useState('')
+  const [filtreStatut, setFiltreStatut] = useState('Tous')
   const menuRef = useRef(null)
 
   const fetchFactures = useCallback(async () => {
@@ -29,9 +30,7 @@ export default function Factures() {
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOuvert(null)
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOuvert(null)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -66,7 +65,6 @@ export default function Factures() {
     const tauxTVA = Number(facture.tva_taux || 0)
     const montantTVA = Number(facture.montant_tva || 0)
     const montantTTC = Number(facture.montant || 0)
-
     doc.setFontSize(24); doc.setTextColor(29, 78, 216); doc.text('Zimvu', 20, 25)
     doc.setFontSize(10); doc.setTextColor(100, 100, 100)
     doc.text('Votre outil de facturation intelligent', 20, 33)
@@ -103,11 +101,15 @@ export default function Factures() {
   }
 
   const factureSelectionnee = factures.find(f => f.id === menuOuvert)
-  const facturesFiltrees = factures.filter(f =>
-    f.client?.toLowerCase().includes(recherche.toLowerCase()) ||
-    f.numero?.toLowerCase().includes(recherche.toLowerCase()) ||
-    f.description?.toLowerCase().includes(recherche.toLowerCase())
-  )
+  const facturesFiltrees = factures.filter(f => {
+    const matchRecherche = f.client?.toLowerCase().includes(recherche.toLowerCase()) ||
+      f.numero?.toLowerCase().includes(recherche.toLowerCase()) ||
+      f.description?.toLowerCase().includes(recherche.toLowerCase())
+    const matchStatut = filtreStatut === 'Tous' || f.statut === filtreStatut
+    return matchRecherche && matchStatut
+  })
+
+  const statuts = ['Tous', 'En attente', 'Payée', 'Annulée']
 
   return (
     <div className="min-h-screen bg-gray-100" onClick={() => setMenuOuvert(null)}>
@@ -157,16 +159,12 @@ export default function Factures() {
       )}
 
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-3">
           <h2 className="text-xl font-semibold text-gray-700">Mes factures</h2>
           <div className="flex gap-3">
-            <input
-              type="text"
-              placeholder="🔍 Rechercher client, n°..."
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-              className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
-            />
+            <input type="text" placeholder="🔍 Rechercher client, n°..."
+              value={recherche} onChange={(e) => setRecherche(e.target.value)}
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-56" />
             <button onClick={() => router.push('/factures/nouvelle')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
               + Nouvelle
@@ -174,12 +172,31 @@ export default function Factures() {
           </div>
         </div>
 
+        {/* Filtres statut */}
+        <div className="flex gap-2 mb-4 flex-wrap">
+          {statuts.map(s => (
+            <button key={s} onClick={() => setFiltreStatut(s)}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                filtreStatut === s
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:border-blue-300'
+              }`}>
+              {s}
+              {s !== 'Tous' && (
+                <span className="ml-1.5 opacity-70">
+                  ({factures.filter(f => f.statut === s).length})
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
         <div className="bg-white rounded-2xl shadow overflow-hidden">
           {loading ? (
             <p className="text-gray-400 text-sm p-6">Chargement...</p>
           ) : facturesFiltrees.length === 0 ? (
             <p className="text-gray-400 text-sm p-6">
-              {recherche ? 'Aucune facture trouvée' : 'Aucune facture pour le moment'}
+              {recherche || filtreStatut !== 'Tous' ? 'Aucune facture trouvée' : 'Aucune facture pour le moment'}
             </p>
           ) : (
             <>
