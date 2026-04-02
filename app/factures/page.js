@@ -37,9 +37,17 @@ export default function Factures() {
   }, [])
 
   const ouvrirMenu = (e, id) => {
+    e.stopPropagation()
+    if (menuOuvert === id) {
+      setMenuOuvert(null)
+      return
+    }
     const rect = e.currentTarget.getBoundingClientRect()
-    setMenuPosition({ top: rect.bottom + window.scrollY + 4, left: rect.left + window.scrollX - 140 })
-    setMenuOuvert(menuOuvert === id ? null : id)
+    setMenuPosition({
+      top: rect.bottom + window.scrollY + 4,
+      left: rect.right + window.scrollX - 180,
+    })
+    setMenuOuvert(id)
   }
 
   const changerStatut = async (id, statutActuel) => {
@@ -99,15 +107,18 @@ export default function Factures() {
     doc.save(`facture-${facture.numero || facture.client}-${facture.date}.pdf`)
   }
 
+  const factureSelectionnee = factures.find(f => f.id === menuOuvert)
+
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100" onClick={() => setMenuOuvert(null)}>
       <Navbar pageCourante="/factures" />
 
-      {/* Menu contextuel — rendu en dehors du tableau */}
-      {menuOuvert && (
+      {/* Menu contextuel */}
+      {menuOuvert && factureSelectionnee && (
         <div
           ref={menuRef}
           className="fixed bg-white rounded-2xl z-50 overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
           style={{
             top: menuPosition.top,
             left: menuPosition.left,
@@ -117,13 +128,13 @@ export default function Factures() {
           }}>
           <div className="p-1">
             <button
-              onClick={() => exporterPDF(factures.find(f => f.id === menuOuvert))}
+              onClick={() => exporterPDF(factureSelectionnee)}
               className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl flex items-center gap-3 transition-colors">
               <span>📄</span> Télécharger PDF
             </button>
             <div className="h-px bg-gray-100 mx-2" />
             <button
-              onClick={() => { setConfirmSupprimer(factures.find(f => f.id === menuOuvert)); setMenuOuvert(null) }}
+              onClick={() => { setConfirmSupprimer(factureSelectionnee); setMenuOuvert(null) }}
               className="w-full text-left px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-3 transition-colors">
               <span>🗑️</span> Supprimer
             </button>
