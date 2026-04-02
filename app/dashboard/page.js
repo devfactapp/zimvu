@@ -9,6 +9,7 @@ const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep',
 export default function Dashboard() {
   const router = useRouter()
   const [user, setUser] = useState(null)
+  const [profil, setProfil] = useState(null)
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     chiffreAffaires: 0,
@@ -24,6 +25,13 @@ export default function Dashboard() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
       setUser(session.user)
+
+      const { data: profilData } = await supabase
+        .from('profils')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
+      setProfil(profilData)
 
       const { data: factures } = await supabase
         .from('factures')
@@ -47,7 +55,6 @@ export default function Dashboard() {
         })
         setDernieresFactures(factures.slice(0, 3))
 
-        // Graphique CA par mois (année en cours)
         const annee = new Date().getFullYear()
         const caParMois = Array(12).fill(0)
         facturesValides.forEach(f => {
@@ -67,7 +74,7 @@ export default function Dashboard() {
   const maxCA = Math.max(...dataGraphique, 1)
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
       <p className="text-gray-500">Chargement...</p>
     </div>
   )
@@ -78,7 +85,7 @@ export default function Dashboard() {
 
       <div className="max-w-6xl mx-auto px-4 py-6">
         <h2 className="text-xl font-semibold text-gray-700 mb-6">
-          Bonjour 👋 {user?.email}
+          Bonjour 👋 {profil?.prenom ? profil.prenom : user?.email}
         </h2>
 
         {/* STATS */}
