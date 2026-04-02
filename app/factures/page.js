@@ -10,6 +10,7 @@ export default function Factures() {
   const [loading, setLoading] = useState(true)
   const [confirmSupprimer, setConfirmSupprimer] = useState(null)
   const [menuOuvert, setMenuOuvert] = useState(null)
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
   const menuRef = useRef(null)
 
   const fetchFactures = useCallback(async () => {
@@ -23,9 +24,7 @@ export default function Factures() {
     setLoading(false)
   }, [router])
 
-  useEffect(() => {
-    fetchFactures()
-  }, [fetchFactures])
+  useEffect(() => { fetchFactures() }, [fetchFactures])
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -36,6 +35,12 @@ export default function Factures() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  const ouvrirMenu = (e, id) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    setMenuPosition({ top: rect.bottom + window.scrollY + 4, left: rect.left + window.scrollX - 140 })
+    setMenuOuvert(menuOuvert === id ? null : id)
+  }
 
   const changerStatut = async (id, statutActuel) => {
     const cycle = { 'En attente': 'Payée', 'Payée': 'Annulée', 'Annulée': 'En attente' }
@@ -54,135 +59,77 @@ export default function Factures() {
     setMenuOuvert(null)
     const { default: jsPDF } = await import('jspdf')
     const doc = new jsPDF()
-
     const montantHT = Number(facture.montant_ht || facture.montant || 0)
     const tauxTVA = Number(facture.tva_taux || 0)
     const montantTVA = Number(facture.montant_tva || 0)
     const montantTTC = Number(facture.montant || 0)
 
-    doc.setFontSize(24)
-    doc.setTextColor(29, 78, 216)
-    doc.text('Zimvu', 20, 25)
-    doc.setFontSize(10)
-    doc.setTextColor(100, 100, 100)
+    doc.setFontSize(24); doc.setTextColor(29, 78, 216); doc.text('Zimvu', 20, 25)
+    doc.setFontSize(10); doc.setTextColor(100, 100, 100)
     doc.text('Votre outil de facturation intelligent', 20, 33)
-    doc.setDrawColor(29, 78, 216)
-    doc.setLineWidth(0.5)
-    doc.line(20, 38, 190, 38)
-
-    doc.setFontSize(18)
-    doc.setTextColor(30, 30, 30)
-    doc.text('FACTURE', 20, 52)
-    doc.setFontSize(10)
-    doc.setTextColor(100, 100, 100)
+    doc.setDrawColor(29, 78, 216); doc.setLineWidth(0.5); doc.line(20, 38, 190, 38)
+    doc.setFontSize(18); doc.setTextColor(30, 30, 30); doc.text('FACTURE', 20, 52)
+    doc.setFontSize(10); doc.setTextColor(100, 100, 100)
     if (facture.numero) doc.text(`N° : ${facture.numero}`, 130, 52)
     doc.text(`Date : ${facture.date}`, 20, 62)
     doc.text(`Statut : ${facture.statut}`, 20, 70)
-
-    doc.setFontSize(12)
-    doc.setTextColor(30, 30, 30)
-    doc.text('Informations client', 20, 85)
-    doc.setFontSize(10)
-    doc.setTextColor(60, 60, 60)
+    doc.setFontSize(12); doc.setTextColor(30, 30, 30); doc.text('Informations client', 20, 85)
+    doc.setFontSize(10); doc.setTextColor(60, 60, 60)
     doc.text(`Nom : ${facture.client}`, 20, 93)
     doc.text(`Email : ${facture.email || 'Non renseigné'}`, 20, 101)
-
-    doc.setFontSize(12)
-    doc.setTextColor(30, 30, 30)
-    doc.text('Détails de la prestation', 20, 116)
-
-    doc.setFillColor(245, 247, 250)
-    doc.rect(20, 122, 170, 30, 'F')
-    doc.setFontSize(10)
-    doc.setTextColor(60, 60, 60)
-    doc.text('Description', 25, 132)
-    doc.text('Montant HT', 150, 132)
-    doc.setDrawColor(200, 200, 200)
-    doc.line(20, 136, 190, 136)
+    doc.setFontSize(12); doc.setTextColor(30, 30, 30); doc.text('Détails de la prestation', 20, 116)
+    doc.setFillColor(245, 247, 250); doc.rect(20, 122, 170, 30, 'F')
+    doc.setFontSize(10); doc.setTextColor(60, 60, 60)
+    doc.text('Description', 25, 132); doc.text('Montant HT', 150, 132)
+    doc.setDrawColor(200, 200, 200); doc.line(20, 136, 190, 136)
     doc.text(facture.description || '', 25, 146)
-    doc.setTextColor(29, 78, 216)
-    doc.text(`${montantHT.toFixed(2)} €`, 150, 146)
-
-    doc.setDrawColor(29, 78, 216)
-    doc.line(20, 158, 190, 158)
-
+    doc.setTextColor(29, 78, 216); doc.text(`${montantHT.toFixed(2)} €`, 150, 146)
+    doc.setDrawColor(29, 78, 216); doc.line(20, 158, 190, 158)
     let y = 168
-    doc.setFontSize(10)
-    doc.setTextColor(60, 60, 60)
-    doc.text('Montant HT', 120, y)
-    doc.setTextColor(30, 30, 30)
-    doc.text(`${montantHT.toFixed(2)} €`, 165, y)
-    y += 10
-
-    doc.setTextColor(60, 60, 60)
-    doc.text(`TVA (${tauxTVA}%)`, 120, y)
-    doc.setTextColor(30, 30, 30)
-    doc.text(`${montantTVA.toFixed(2)} €`, 165, y)
-    y += 10
-
-    doc.setFillColor(29, 78, 216)
-    doc.rect(115, y - 4, 75, 12, 'F')
-    doc.setFontSize(11)
-    doc.setTextColor(255, 255, 255)
-    doc.text('Total TTC', 120, y + 4)
-    doc.text(`${montantTTC.toFixed(2)} €`, 165, y + 4)
-    y += 18
-
-    if (tauxTVA === 0) {
-      doc.setFontSize(8)
-      doc.setTextColor(150, 150, 150)
-      doc.text('TVA non applicable — article 293 B du CGI', 20, y + 10)
-    }
-
-    doc.setFontSize(9)
-    doc.setTextColor(150, 150, 150)
+    doc.setFontSize(10); doc.setTextColor(60, 60, 60); doc.text('Montant HT', 120, y)
+    doc.setTextColor(30, 30, 30); doc.text(`${montantHT.toFixed(2)} €`, 165, y); y += 10
+    doc.setTextColor(60, 60, 60); doc.text(`TVA (${tauxTVA}%)`, 120, y)
+    doc.setTextColor(30, 30, 30); doc.text(`${montantTVA.toFixed(2)} €`, 165, y); y += 10
+    doc.setFillColor(29, 78, 216); doc.rect(115, y - 4, 75, 12, 'F')
+    doc.setFontSize(11); doc.setTextColor(255, 255, 255)
+    doc.text('Total TTC', 120, y + 4); doc.text(`${montantTTC.toFixed(2)} €`, 165, y + 4); y += 18
+    if (tauxTVA === 0) { doc.setFontSize(8); doc.setTextColor(150, 150, 150); doc.text('TVA non applicable — article 293 B du CGI', 20, y + 10) }
+    doc.setFontSize(9); doc.setTextColor(150, 150, 150)
     doc.text('Merci pour votre confiance — Zimvu.vercel.app', 20, 280)
     doc.save(`facture-${facture.numero || facture.client}-${facture.date}.pdf`)
   }
 
-  // Composant menu réutilisable
-  const MenuActions = ({ facture }) => (
-    <div className="relative" ref={menuOuvert === facture.id ? menuRef : null}>
-      <button
-        onClick={() => setMenuOuvert(menuOuvert === facture.id ? null : facture.id)}
-        className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-lg transition-colors ${
-          menuOuvert === facture.id
-            ? 'bg-blue-100 text-blue-600'
-            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-        }`}>
-        ···
-      </button>
-      {menuOuvert === facture.id && (
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <Navbar pageCourante="/factures" />
+
+      {/* Menu contextuel — rendu en dehors du tableau */}
+      {menuOuvert && (
         <div
-          className="absolute right-0 top-10 bg-white rounded-2xl z-50 overflow-hidden"
+          ref={menuRef}
+          className="fixed bg-white rounded-2xl z-50 overflow-hidden"
           style={{
+            top: menuPosition.top,
+            left: menuPosition.left,
             minWidth: '180px',
             boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 4px 20px rgba(0,0,0,0.1)',
             border: '1px solid rgba(0,0,0,0.06)'
           }}>
           <div className="p-1">
             <button
-              onClick={() => exporterPDF(facture)}
+              onClick={() => exporterPDF(factures.find(f => f.id === menuOuvert))}
               className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl flex items-center gap-3 transition-colors">
-              <span className="text-base">📄</span>
-              Télécharger PDF
+              <span>📄</span> Télécharger PDF
             </button>
             <div className="h-px bg-gray-100 mx-2" />
             <button
-              onClick={() => { setConfirmSupprimer(facture); setMenuOuvert(null) }}
+              onClick={() => { setConfirmSupprimer(factures.find(f => f.id === menuOuvert)); setMenuOuvert(null) }}
               className="w-full text-left px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-3 transition-colors">
-              <span className="text-base">🗑️</span>
-              Supprimer
+              <span>🗑️</span> Supprimer
             </button>
           </div>
         </div>
       )}
-    </div>
-  )
-
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <Navbar pageCourante="/factures" />
 
       {confirmSupprimer && (
         <div style={{position:'fixed', inset:0, backgroundColor:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:'0 16px'}}>
@@ -229,7 +176,13 @@ export default function Factures() {
                       <span className="font-semibold text-gray-800">{facture.client}</span>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-blue-700">{Number(facture.montant).toFixed(2)} €</span>
-                        <MenuActions facture={facture} />
+                        <button
+                          onClick={(e) => ouvrirMenu(e, facture.id)}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-lg transition-colors ${
+                            menuOuvert === facture.id ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                          }`}>
+                          ···
+                        </button>
                       </div>
                     </div>
                     {facture.numero && <p className="text-xs text-blue-600 font-medium mb-1">{facture.numero}</p>}
@@ -241,7 +194,6 @@ export default function Factures() {
                       </p>
                     )}
                     <span onClick={() => changerStatut(facture.id, facture.statut)}
-                      title="Cliquer pour changer le statut"
                       className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer ${
                         facture.statut === "Payée" ? "bg-green-100 text-green-700" :
                         facture.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
@@ -254,7 +206,7 @@ export default function Factures() {
               </div>
 
               {/* Vue desktop */}
-              <div className="hidden md:block overflow-visible">
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
@@ -281,7 +233,6 @@ export default function Factures() {
                         <td className="px-6 py-4 font-semibold text-blue-700">{Number(facture.montant).toFixed(2)} €</td>
                         <td className="px-6 py-4">
                           <span onClick={() => changerStatut(facture.id, facture.statut)}
-                            title="Cliquer pour changer le statut"
                             className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer hover:opacity-75 ${
                               facture.statut === "Payée" ? "bg-green-100 text-green-700" :
                               facture.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
@@ -291,7 +242,13 @@ export default function Factures() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <MenuActions facture={facture} />
+                          <button
+                            onClick={(e) => ouvrirMenu(e, facture.id)}
+                            className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-lg transition-colors ${
+                              menuOuvert === facture.id ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            }`}>
+                            ···
+                          </button>
                         </td>
                       </tr>
                     ))}
