@@ -254,7 +254,7 @@ export default function Factures() {
               </div>
 
               {/* Vue desktop */}
-              <div className="hidden md:block overflow-x-auto">
+              <div className="hidden md:block overflow-visible">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
