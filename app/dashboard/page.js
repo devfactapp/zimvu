@@ -73,7 +73,7 @@ export default function Dashboard() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 md:ml-56">
       <Navbar pageCourante="/dashboard" />
 
       <div className="max-w-6xl mx-auto px-4 py-6">
