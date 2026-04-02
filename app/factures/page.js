@@ -44,8 +44,8 @@ export default function Factures() {
     }
     const rect = e.currentTarget.getBoundingClientRect()
     setMenuPosition({
-      top: rect.bottom + window.scrollY + 4,
-      left: rect.right + window.scrollX - 180,
+      top: rect.bottom + 4,
+left: rect.left,
     })
     setMenuOuvert(id)
   }
