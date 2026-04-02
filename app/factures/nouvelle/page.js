@@ -43,7 +43,7 @@ export default function NouvelleFacture() {
 
       const nb = factures?.length || 0
       setNbFactures(nb)
-      if (nb >= 3) setLimitAtteinte(true)
+      if (nb >= 3 && session.user.email !== 'devfact.app@gmail.com') setLimitAtteinte(true)
     }
     fetchClients()
   }, [])
