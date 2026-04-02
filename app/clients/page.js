@@ -12,35 +12,28 @@ export default function Clients() {
   const [nouveau, setNouveau] = useState({ nom: '', email: '', telephone: '' })
   const [saving, setSaving] = useState(false)
   const [confirmSupprimer, setConfirmSupprimer] = useState(null)
+  const [recherche, setRecherche] = useState('')
 
-  useEffect(() => {
-    fetchClients()
-  }, [])
+  useEffect(() => { fetchClients() }, [])
 
   const fetchClients = async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/'); return }
-
-    const { data } = await supabase
-      .from('clients')
-      .select('*')
-      .order('created_at', { ascending: false })
-
+    const { data } = await supabase.from('clients').select('*').order('created_at', { ascending: false })
     setClients(data || [])
     setLoading(false)
   }
 
   const ajouterClient = async () => {
+    if (!nouveau.nom) return
     setSaving(true)
     const { data: { session } } = await supabase.auth.getSession()
-
     await supabase.from('clients').insert([{
       nom: nouveau.nom,
       email: nouveau.email,
       telephone: nouveau.telephone,
       user_id: session.user.id,
     }])
-
     setNouveau({ nom: '', email: '', telephone: '' })
     setShowForm(false)
     fetchClients()
@@ -53,12 +46,16 @@ export default function Clients() {
     fetchClients()
   }
 
+  const clientsFiltres = clients.filter(c =>
+    c.nom?.toLowerCase().includes(recherche.toLowerCase()) ||
+    c.email?.toLowerCase().includes(recherche.toLowerCase()) ||
+    c.telephone?.toLowerCase().includes(recherche.toLowerCase())
+  )
+
   return (
     <div className="min-h-screen bg-gray-100">
-
       <Navbar pageCourante="/clients" />
 
-      {/* MODAL CONFIRMATION SUPPRESSION */}
       {confirmSupprimer && (
         <div style={{position:'fixed', inset:0, backgroundColor:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:50, padding:'0 16px'}}>
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
@@ -67,13 +64,11 @@ export default function Clients() {
               Le client <strong>{confirmSupprimer.nom}</strong> sera supprimé définitivement.
             </p>
             <div className="flex gap-3">
-              <button
-                onClick={() => supprimerClient(confirmSupprimer.id)}
+              <button onClick={() => supprimerClient(confirmSupprimer.id)}
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg text-sm">
                 Supprimer
               </button>
-              <button
-                onClick={() => setConfirmSupprimer(null)}
+              <button onClick={() => setConfirmSupprimer(null)}
                 className="flex-1 border border-gray-300 text-gray-600 font-semibold py-2 rounded-lg text-sm">
                 Annuler
               </button>
@@ -82,38 +77,37 @@ export default function Clients() {
         </div>
       )}
 
-      {/* CONTENU */}
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
           <h2 className="text-xl font-semibold text-gray-700">Mes clients</h2>
-          <button onClick={() => setShowForm(!showForm)} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-            + Nouveau client
-          </button>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              placeholder="🔍 Rechercher un client..."
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
+            />
+            <button onClick={() => setShowForm(!showForm)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+              + Nouveau client
+            </button>
+          </div>
         </div>
 
-        {/* Formulaire nouveau client */}
         {showForm && (
           <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-6">
             <h3 className="text-lg font-semibold text-gray-700 mb-4">Ajouter un client</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <input
-                placeholder="Nom"
-                value={nouveau.nom}
+              <input placeholder="Nom *" value={nouveau.nom}
                 onChange={(e) => setNouveau({ ...nouveau, nom: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                placeholder="Email"
-                value={nouveau.email}
+                className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input placeholder="Email" value={nouveau.email}
                 onChange={(e) => setNouveau({ ...nouveau, email: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <input
-                placeholder="Téléphone"
-                value={nouveau.telephone}
+                className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <input placeholder="Téléphone" value={nouveau.telephone}
                 onChange={(e) => setNouveau({ ...nouveau, telephone: e.target.value })}
-                className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+                className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div className="flex gap-3">
               <button onClick={ajouterClient} disabled={saving}
@@ -128,21 +122,22 @@ export default function Clients() {
           </div>
         )}
 
-        {/* Liste clients */}
         <div className="bg-white rounded-2xl shadow overflow-hidden">
           {loading ? (
             <p className="text-gray-400 text-sm p-6">Chargement...</p>
-          ) : clients.length === 0 ? (
-            <p className="text-gray-400 text-sm p-6">Aucun client pour le moment</p>
+          ) : clientsFiltres.length === 0 ? (
+            <p className="text-gray-400 text-sm p-6">
+              {recherche ? 'Aucun client trouvé' : 'Aucun client pour le moment'}
+            </p>
           ) : (
             <>
-              {/* Vue mobile : cartes */}
               <div className="md:hidden divide-y divide-gray-100">
-                {clients.map((client) => (
+                {clientsFiltres.map((client) => (
                   <div key={client.id} className="p-4">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-gray-800">{client.nom}</span>
-                      <span onClick={() => setConfirmSupprimer(client)} className="text-red-500 cursor-pointer text-sm">Supprimer</span>
+                      <span onClick={() => setConfirmSupprimer(client)}
+                        className="text-red-500 cursor-pointer text-sm">Supprimer</span>
                     </div>
                     <p className="text-gray-500 text-sm">{client.email}</p>
                     <p className="text-gray-400 text-sm">{client.telephone}</p>
@@ -150,7 +145,6 @@ export default function Clients() {
                 ))}
               </div>
 
-              {/* Vue desktop : tableau */}
               <div className="hidden md:block">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
@@ -162,13 +156,14 @@ export default function Clients() {
                     </tr>
                   </thead>
                   <tbody>
-                    {clients.map((client) => (
+                    {clientsFiltres.map((client) => (
                       <tr key={client.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="px-6 py-4 font-medium text-gray-800">{client.nom}</td>
                         <td className="px-6 py-4 text-gray-600">{client.email}</td>
                         <td className="px-6 py-4 text-gray-600">{client.telephone}</td>
                         <td className="px-6 py-4">
-                          <span onClick={() => setConfirmSupprimer(client)} className="text-red-500 cursor-pointer hover:underline text-sm">Supprimer</span>
+                          <span onClick={() => setConfirmSupprimer(client)}
+                            className="text-red-500 cursor-pointer hover:underline text-sm">Supprimer</span>
                         </td>
                       </tr>
                     ))}
