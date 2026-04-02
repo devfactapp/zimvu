@@ -67,7 +67,7 @@ export default function Dashboard() {
   const maxCA = Math.max(...dataGraphique, 1)
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-100">
       <p className="text-gray-500">Chargement...</p>
     </div>
   )
