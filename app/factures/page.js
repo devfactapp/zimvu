@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../supabase'
 import Navbar from '../components/Navbar'
@@ -9,16 +9,16 @@ export default function Factures() {
   const [factures, setFactures] = useState([])
   const [loading, setLoading] = useState(true)
   const [confirmSupprimer, setConfirmSupprimer] = useState(null)
+  const [menuOuvert, setMenuOuvert] = useState(null)
+  const menuRef = useRef(null)
 
   const fetchFactures = useCallback(async () => {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/'); return }
-
     const { data } = await supabase
       .from('factures')
       .select('*')
       .order('created_at', { ascending: false })
-
     setFactures(data || [])
     setLoading(false)
   }, [router])
@@ -26,6 +26,17 @@ export default function Factures() {
   useEffect(() => {
     fetchFactures()
   }, [fetchFactures])
+
+  // Fermer le menu si on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOuvert(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const changerStatut = async (id, statutActuel) => {
     const cycle = { 'En attente': 'Payée', 'Payée': 'Annulée', 'Annulée': 'En attente' }
@@ -41,6 +52,7 @@ export default function Factures() {
   }
 
   const exporterPDF = async (facture) => {
+    setMenuOuvert(null)
     const { default: jsPDF } = await import('jspdf')
     const doc = new jsPDF()
 
@@ -49,7 +61,6 @@ export default function Factures() {
     const montantTVA = Number(facture.montant_tva || 0)
     const montantTTC = Number(facture.montant || 0)
 
-    // En-tête
     doc.setFontSize(24)
     doc.setTextColor(29, 78, 216)
     doc.text('Zimvu', 20, 25)
@@ -60,7 +71,6 @@ export default function Factures() {
     doc.setLineWidth(0.5)
     doc.line(20, 38, 190, 38)
 
-    // Titre + numéro
     doc.setFontSize(18)
     doc.setTextColor(30, 30, 30)
     doc.text('FACTURE', 20, 52)
@@ -70,7 +80,6 @@ export default function Factures() {
     doc.text(`Date : ${facture.date}`, 20, 62)
     doc.text(`Statut : ${facture.statut}`, 20, 70)
 
-    // Client
     doc.setFontSize(12)
     doc.setTextColor(30, 30, 30)
     doc.text('Informations client', 20, 85)
@@ -79,7 +88,6 @@ export default function Factures() {
     doc.text(`Nom : ${facture.client}`, 20, 93)
     doc.text(`Email : ${facture.email || 'Non renseigné'}`, 20, 101)
 
-    // Prestation
     doc.setFontSize(12)
     doc.setTextColor(30, 30, 30)
     doc.text('Détails de la prestation', 20, 116)
@@ -96,14 +104,12 @@ export default function Factures() {
     doc.setTextColor(29, 78, 216)
     doc.text(`${montantHT.toFixed(2)} €`, 150, 146)
 
-    // Totaux
     doc.setDrawColor(29, 78, 216)
     doc.line(20, 158, 190, 158)
 
     let y = 168
     doc.setFontSize(10)
     doc.setTextColor(60, 60, 60)
-
     doc.text('Montant HT', 120, y)
     doc.setTextColor(30, 30, 30)
     doc.text(`${montantHT.toFixed(2)} €`, 165, y)
@@ -123,18 +129,15 @@ export default function Factures() {
     doc.text(`${montantTTC.toFixed(2)} €`, 165, y + 4)
     y += 18
 
-    // Mention TVA si 0%
     if (tauxTVA === 0) {
       doc.setFontSize(8)
       doc.setTextColor(150, 150, 150)
       doc.text('TVA non applicable — article 293 B du CGI', 20, y + 10)
     }
 
-    // Footer
     doc.setFontSize(9)
     doc.setTextColor(150, 150, 150)
     doc.text('Merci pour votre confiance — Zimvu.vercel.app', 20, 280)
-
     doc.save(`facture-${facture.numero || facture.client}-${facture.date}.pdf`)
   }
 
@@ -166,7 +169,8 @@ export default function Factures() {
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-gray-700">Mes factures</h2>
-          <button onClick={() => router.push('/factures/nouvelle')} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          <button onClick={() => router.push('/factures/nouvelle')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
             + Nouvelle
           </button>
         </div>
@@ -184,11 +188,30 @@ export default function Factures() {
                   <div key={facture.id} className="p-4">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-gray-800">{facture.client}</span>
-                      <span className="font-bold text-blue-700">{Number(facture.montant).toFixed(2)} €</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-blue-700">{Number(facture.montant).toFixed(2)} €</span>
+                        {/* Menu ... mobile */}
+                        <div className="relative" ref={menuOuvert === facture.id ? menuRef : null}>
+                          <button onClick={() => setMenuOuvert(menuOuvert === facture.id ? null : facture.id)}
+                            className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 text-lg font-bold">
+                            ···
+                          </button>
+                          {menuOuvert === facture.id && (
+                            <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-xl shadow-lg z-10 min-w-[140px]">
+                              <button onClick={() => exporterPDF(facture)}
+                                className="w-full text-left px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 rounded-t-xl">
+                                📄 Télécharger PDF
+                              </button>
+                              <button onClick={() => { setConfirmSupprimer(facture); setMenuOuvert(null) }}
+                                className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50 rounded-b-xl">
+                                🗑️ Supprimer
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    {facture.numero && (
-                      <p className="text-xs text-blue-600 font-medium mb-1">{facture.numero}</p>
-                    )}
+                    {facture.numero && <p className="text-xs text-blue-600 font-medium mb-1">{facture.numero}</p>}
                     <p className="text-gray-500 text-sm mb-1">{facture.description}</p>
                     <p className="text-gray-400 text-xs mb-1">{facture.date}</p>
                     {facture.tva_taux > 0 && (
@@ -196,21 +219,15 @@ export default function Factures() {
                         HT : {Number(facture.montant_ht).toFixed(2)} € · TVA {facture.tva_taux}% : {Number(facture.montant_tva).toFixed(2)} €
                       </p>
                     )}
-                    <div className="flex items-center justify-between">
-                      <span onClick={() => changerStatut(facture.id, facture.statut)}
-                        title="Cliquer pour changer le statut"
-                        className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer ${
-                          facture.statut === "Payée" ? "bg-green-100 text-green-700" :
-                          facture.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
-                          "bg-red-100 text-red-700"
-                        }`}>
-                        {facture.statut}
-                      </span>
-                      <div className="flex gap-4">
-                        <span onClick={() => exporterPDF(facture)} className="text-blue-600 cursor-pointer text-sm">PDF</span>
-                        <span onClick={() => setConfirmSupprimer(facture)} className="text-red-500 cursor-pointer text-sm">Supprimer</span>
-                      </div>
-                    </div>
+                    <span onClick={() => changerStatut(facture.id, facture.statut)}
+                      title="Cliquer pour changer le statut"
+                      className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer ${
+                        facture.statut === "Payée" ? "bg-green-100 text-green-700" :
+                        facture.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
+                        "bg-red-100 text-red-700"
+                      }`}>
+                      {facture.statut}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -252,9 +269,26 @@ export default function Factures() {
                             {facture.statut}
                           </span>
                         </td>
-                        <td className="px-6 py-4 flex gap-3">
-                          <span onClick={() => exporterPDF(facture)} className="text-blue-600 cursor-pointer hover:underline text-sm">PDF</span>
-                          <span onClick={() => setConfirmSupprimer(facture)} className="text-red-500 cursor-pointer hover:underline text-sm">Supprimer</span>
+                        <td className="px-6 py-4">
+                          {/* Menu ... desktop */}
+                          <div className="relative" ref={menuOuvert === facture.id ? menuRef : null}>
+                            <button onClick={() => setMenuOuvert(menuOuvert === facture.id ? null : facture.id)}
+                              className="text-gray-400 hover:text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-100 font-bold text-lg">
+                              ···
+                            </button>
+                            {menuOuvert === facture.id && (
+                              <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-xl shadow-lg z-10 min-w-[160px]">
+                                <button onClick={() => exporterPDF(facture)}
+                                  className="w-full text-left px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 rounded-t-xl">
+                                  📄 Télécharger PDF
+                                </button>
+                                <button onClick={() => { setConfirmSupprimer(facture); setMenuOuvert(null) }}
+                                  className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50 rounded-b-xl border-t border-gray-100">
+                                  🗑️ Supprimer
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
