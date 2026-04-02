@@ -12,6 +12,7 @@ export default function Devis() {
   const [converting, setConverting] = useState(null)
   const [menuOuvert, setMenuOuvert] = useState(null)
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
+  const [recherche, setRecherche] = useState('')
   const menuRef = useRef(null)
 
   const fetchDevis = useCallback(async () => {
@@ -107,19 +108,19 @@ export default function Devis() {
     doc.setFillColor(245, 247, 250); doc.rect(20, 130, 170, 30, 'F')
     doc.setFontSize(10); doc.setTextColor(60, 60, 60)
     doc.text('Description', 25, 140); doc.text('Montant HT', 150, 140)
-doc.setDrawColor(200, 200, 200); doc.line(20, 144, 190, 144)
-doc.text(devis.description || '', 25, 154)
-doc.setTextColor(29, 78, 216); doc.text(`${Number(devis.montant_ht || devis.montant).toFixed(2)} €`, 150, 154)
-doc.setDrawColor(29, 78, 216); doc.line(20, 166, 190, 166)
-let y = 176
-doc.setFontSize(10); doc.setTextColor(60, 60, 60); doc.text('Montant HT', 120, y)
-doc.setTextColor(30, 30, 30); doc.text(`${Number(devis.montant_ht || devis.montant).toFixed(2)} €`, 165, y); y += 10
-doc.setTextColor(60, 60, 60); doc.text(`TVA (${devis.tva_taux || 0}%)`, 120, y)
-doc.setTextColor(30, 30, 30); doc.text(`${Number(devis.montant_tva || 0).toFixed(2)} €`, 165, y); y += 10
-doc.setFillColor(29, 78, 216); doc.rect(115, y - 4, 75, 12, 'F')
-doc.setFontSize(11); doc.setTextColor(255, 255, 255)
-doc.text('Total TTC', 120, y + 4); doc.text(`${Number(devis.montant).toFixed(2)} €`, 165, y + 4)
-if (devis.tva_taux === 0) { doc.setFontSize(8); doc.setTextColor(150, 150, 150); doc.text('TVA non applicable — article 293 B du CGI', 20, y + 20) }
+    doc.setDrawColor(200, 200, 200); doc.line(20, 144, 190, 144)
+    doc.text(devis.description || '', 25, 154)
+    doc.setTextColor(29, 78, 216); doc.text(`${Number(devis.montant_ht || devis.montant).toFixed(2)} €`, 150, 154)
+    doc.setDrawColor(29, 78, 216); doc.line(20, 166, 190, 166)
+    let y = 176
+    doc.setFontSize(10); doc.setTextColor(60, 60, 60); doc.text('Montant HT', 120, y)
+    doc.setTextColor(30, 30, 30); doc.text(`${Number(devis.montant_ht || devis.montant).toFixed(2)} €`, 165, y); y += 10
+    doc.setTextColor(60, 60, 60); doc.text(`TVA (${devis.tva_taux || 0}%)`, 120, y)
+    doc.setTextColor(30, 30, 30); doc.text(`${Number(devis.montant_tva || 0).toFixed(2)} €`, 165, y); y += 10
+    doc.setFillColor(29, 78, 216); doc.rect(115, y - 4, 75, 12, 'F')
+    doc.setFontSize(11); doc.setTextColor(255, 255, 255)
+    doc.text('Total TTC', 120, y + 4); doc.text(`${Number(devis.montant).toFixed(2)} €`, 165, y + 4)
+    if (devis.tva_taux === 0) { doc.setFontSize(8); doc.setTextColor(150, 150, 150); doc.text('TVA non applicable — article 293 B du CGI', 20, y + 20) }
     doc.setFontSize(9); doc.setTextColor(150, 150, 150)
     doc.text('Ce devis est valable jusqu\'à la date de validité indiquée.', 20, 240)
     doc.text('Merci pour votre confiance — Zimvu.vercel.app', 20, 248)
@@ -138,20 +139,20 @@ if (devis.tva_taux === 0) { doc.setFontSize(8); doc.setTextColor(150, 150, 150);
   }
 
   const devisSelectionne = devis.find(d => d.id === menuOuvert)
+  const devisFiltres = devis.filter(d =>
+    d.client?.toLowerCase().includes(recherche.toLowerCase()) ||
+    d.numero?.toLowerCase().includes(recherche.toLowerCase()) ||
+    d.description?.toLowerCase().includes(recherche.toLowerCase())
+  )
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar pageCourante="/devis" />
 
-      {/* Menu contextuel */}
       {menuOuvert && devisSelectionne && (
-        <div
-          ref={menuRef}
-          className="fixed bg-white rounded-2xl z-50 overflow-hidden"
+        <div ref={menuRef} className="fixed bg-white rounded-2xl z-50 overflow-hidden"
           style={{
-            top: menuPosition.top,
-            left: menuPosition.left,
-            minWidth: '180px',
+            top: menuPosition.top, left: menuPosition.left, minWidth: '180px',
             boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 4px 20px rgba(0,0,0,0.1)',
             border: '1px solid rgba(0,0,0,0.06)'
           }}>
@@ -200,35 +201,48 @@ if (devis.tva_taux === 0) { doc.setFontSize(8); doc.setTextColor(150, 150, 150);
       )}
 
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
           <h2 className="text-xl font-semibold text-gray-700">Mes devis</h2>
-          <button onClick={() => router.push('/devis/nouveau')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-            + Nouveau devis
-          </button>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              placeholder="🔍 Rechercher client, n°..."
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+              className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-56"
+            />
+            <button onClick={() => router.push('/devis/nouveau')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+              + Nouveau devis
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow overflow-hidden">
           {loading ? (
             <p className="text-gray-400 text-sm p-6">Chargement...</p>
-          ) : devis.length === 0 ? (
+          ) : devisFiltres.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-gray-400 text-sm mb-4">Aucun devis pour le moment</p>
-              <button onClick={() => router.push('/devis/nouveau')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium">
-                Créer mon premier devis
-              </button>
+              <p className="text-gray-400 text-sm mb-4">
+                {recherche ? 'Aucun devis trouvé' : 'Aucun devis pour le moment'}
+              </p>
+              {!recherche && (
+                <button onClick={() => router.push('/devis/nouveau')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium">
+                  Créer mon premier devis
+                </button>
+              )}
             </div>
           ) : (
             <>
               {/* Vue mobile */}
               <div className="md:hidden divide-y divide-gray-100">
-                {devis.map((d) => (
+                {devisFiltres.map((d) => (
                   <div key={d.id} className="p-4">
                     <div className="flex items-center justify-between mb-1">
                       <span className="font-semibold text-gray-800">{d.client}</span>
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-blue-700">{d.montant} €</span>
+                        <span className="font-bold text-blue-700">{Number(d.montant).toFixed(2)} €</span>
                         <button onClick={(e) => ouvrirMenu(e, d.id)}
                           className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-lg transition-colors ${
                             menuOuvert === d.id ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
@@ -257,14 +271,14 @@ if (devis.tva_taux === 0) { doc.setFontSize(8); doc.setTextColor(150, 150, 150);
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Date</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Validité</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">HT</th>
-<th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">TVA</th>
-<th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">TTC</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">TVA</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">TTC</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Statut</th>
                       <th className="text-left px-6 py-4 text-sm font-semibold text-gray-600">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {devis.map((d) => (
+                    {devisFiltres.map((d) => (
                       <tr key={d.id} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="px-6 py-4 text-blue-600 font-medium text-sm">{d.numero || '—'}</td>
                         <td className="px-6 py-4 font-medium text-gray-800">{d.client}</td>
@@ -272,8 +286,8 @@ if (devis.tva_taux === 0) { doc.setFontSize(8); doc.setTextColor(150, 150, 150);
                         <td className="px-6 py-4 text-gray-600">{d.date}</td>
                         <td className="px-6 py-4 text-gray-600">{d.date_validite || '—'}</td>
                         <td className="px-6 py-4 text-gray-600">{Number(d.montant_ht || d.montant).toFixed(2)} €</td>
-<td className="px-6 py-4 text-gray-600">{d.tva_taux > 0 ? `${d.tva_taux}%` : '—'}</td>
-<td className="px-6 py-4 font-semibold text-blue-700">{Number(d.montant).toFixed(2)} €</td>
+                        <td className="px-6 py-4 text-gray-600">{d.tva_taux > 0 ? `${d.tva_taux}%` : '—'}</td>
+                        <td className="px-6 py-4 font-semibold text-blue-700">{Number(d.montant).toFixed(2)} €</td>
                         <td className="px-6 py-4">
                           <span onClick={() => changerStatut(d.id, d.statut)}
                             className={`px-3 py-1 rounded-full text-xs font-semibold cursor-pointer hover:opacity-75 ${couleurStatut(d.statut)}`}>
