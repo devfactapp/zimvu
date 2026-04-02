@@ -27,7 +27,6 @@ export default function Factures() {
     fetchFactures()
   }, [fetchFactures])
 
-  // Fermer le menu si on clique ailleurs
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -141,6 +140,46 @@ export default function Factures() {
     doc.save(`facture-${facture.numero || facture.client}-${facture.date}.pdf`)
   }
 
+  // Composant menu réutilisable
+  const MenuActions = ({ facture }) => (
+    <div className="relative" ref={menuOuvert === facture.id ? menuRef : null}>
+      <button
+        onClick={() => setMenuOuvert(menuOuvert === facture.id ? null : facture.id)}
+        className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-lg transition-colors ${
+          menuOuvert === facture.id
+            ? 'bg-blue-100 text-blue-600'
+            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+        }`}>
+        ···
+      </button>
+      {menuOuvert === facture.id && (
+        <div
+          className="absolute right-0 top-10 bg-white rounded-2xl z-50 overflow-hidden"
+          style={{
+            minWidth: '180px',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15), 0 4px 20px rgba(0,0,0,0.1)',
+            border: '1px solid rgba(0,0,0,0.06)'
+          }}>
+          <div className="p-1">
+            <button
+              onClick={() => exporterPDF(facture)}
+              className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl flex items-center gap-3 transition-colors">
+              <span className="text-base">📄</span>
+              Télécharger PDF
+            </button>
+            <div className="h-px bg-gray-100 mx-2" />
+            <button
+              onClick={() => { setConfirmSupprimer(facture); setMenuOuvert(null) }}
+              className="w-full text-left px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl flex items-center gap-3 transition-colors">
+              <span className="text-base">🗑️</span>
+              Supprimer
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar pageCourante="/factures" />
@@ -190,25 +229,7 @@ export default function Factures() {
                       <span className="font-semibold text-gray-800">{facture.client}</span>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-blue-700">{Number(facture.montant).toFixed(2)} €</span>
-                        {/* Menu ... mobile */}
-                        <div className="relative" ref={menuOuvert === facture.id ? menuRef : null}>
-                          <button onClick={() => setMenuOuvert(menuOuvert === facture.id ? null : facture.id)}
-                            className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 text-lg font-bold">
-                            ···
-                          </button>
-                          {menuOuvert === facture.id && (
-                            <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-xl shadow-lg z-10 min-w-[140px]">
-                              <button onClick={() => exporterPDF(facture)}
-                                className="w-full text-left px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 rounded-t-xl">
-                                📄 Télécharger PDF
-                              </button>
-                              <button onClick={() => { setConfirmSupprimer(facture); setMenuOuvert(null) }}
-                                className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50 rounded-b-xl">
-                                🗑️ Supprimer
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                        <MenuActions facture={facture} />
                       </div>
                     </div>
                     {facture.numero && <p className="text-xs text-blue-600 font-medium mb-1">{facture.numero}</p>}
@@ -270,25 +291,7 @@ export default function Factures() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          {/* Menu ... desktop */}
-                          <div className="relative" ref={menuOuvert === facture.id ? menuRef : null}>
-                            <button onClick={() => setMenuOuvert(menuOuvert === facture.id ? null : facture.id)}
-                              className="text-gray-400 hover:text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-100 font-bold text-lg">
-                              ···
-                            </button>
-                            {menuOuvert === facture.id && (
-                              <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-xl shadow-lg z-10 min-w-[160px]">
-                                <button onClick={() => exporterPDF(facture)}
-                                  className="w-full text-left px-4 py-3 text-sm text-blue-600 hover:bg-blue-50 rounded-t-xl">
-                                  📄 Télécharger PDF
-                                </button>
-                                <button onClick={() => { setConfirmSupprimer(facture); setMenuOuvert(null) }}
-                                  className="w-full text-left px-4 py-3 text-sm text-red-500 hover:bg-red-50 rounded-b-xl border-t border-gray-100">
-                                  🗑️ Supprimer
-                                </button>
-                              </div>
-                            )}
-                          </div>
+                          <MenuActions facture={facture} />
                         </td>
                       </tr>
                     ))}
