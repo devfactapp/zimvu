@@ -25,7 +25,6 @@ export default function Factures() {
       .order('created_at', { ascending: false })
     setFactures(data || [])
 
-    // Charger le profil pour le PDF
     const { data: profilData } = await supabase
       .from('profils')
       .select('*')
@@ -77,15 +76,13 @@ export default function Factures() {
     const montantTVA = Number(facture.montant_tva || 0)
     const montantTTC = Number(facture.montant || 0)
 
-    const nomEmetteur = profil
-      ? `${profil.prenom || ''} ${profil.nom || ''}`.trim()
-      : ''
+    const nomEmetteur = profil ? `${profil.prenom || ''} ${profil.nom || ''}`.trim() : ''
     const entreprise = profil?.nom_entreprise || nomEmetteur || 'Zimvu'
     const adresse = profil?.adresse || ''
     const telephone = profil?.telephone || ''
     const siret = profil?.siret || ''
 
-    // ── HEADER BLOC BLEU ──
+    // ── HEADER ──
     doc.setFillColor(17, 24, 39)
     doc.rect(0, 0, 210, 45, 'F')
 
@@ -99,7 +96,6 @@ export default function Factures() {
     doc.setTextColor(156, 163, 175)
     doc.text('Logiciel de facturation', 20, 28)
 
-    // Infos émetteur à droite dans le header
     doc.setFontSize(9)
     doc.setTextColor(229, 231, 235)
     if (entreprise) doc.text(entreprise, 190, 14, { align: 'right' })
@@ -120,19 +116,20 @@ export default function Factures() {
       doc.text(facture.numero, 190, 58, { align: 'right' })
     }
 
-    // Date + Statut
+    // Date
     doc.setFontSize(10)
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(107, 114, 128)
     doc.text(`Date d'émission : ${facture.date}`, 20, 74)
 
+    // Statut aligné avec la ligne (190)
     const statutColor = facture.statut === 'Payée' ? [22, 163, 74] :
       facture.statut === 'En attente' ? [217, 119, 6] : [220, 38, 38]
     doc.setTextColor(...statutColor)
     doc.setFont('helvetica', 'bold')
     doc.text(`● ${facture.statut}`, 190, 74, { align: 'right' })
 
-    // Ligne séparatrice
+    // Ligne séparatrice de 20 à 190
     doc.setDrawColor(229, 231, 235)
     doc.setLineWidth(0.5)
     doc.line(20, 80, 190, 80)
@@ -159,14 +156,15 @@ export default function Factures() {
     // ── TABLEAU PRESTATIONS ──
     const tableTop = 135
 
-    // En-tête tableau
+    // En-tête tableau — bande noire de 20 à 190 (largeur 170)
     doc.setFillColor(17, 24, 39)
     doc.rect(20, tableTop, 170, 10, 'F')
     doc.setFontSize(9)
     doc.setTextColor(255, 255, 255)
     doc.setFont('helvetica', 'bold')
     doc.text('DESCRIPTION', 27, tableTop + 7)
-    doc.text('MONTANT HT', 190, tableTop + 7, { align: 'right' })
+    // MONTANT HT à 187 align right pour rester dans la bande
+    doc.text('MONTANT HT', 187, tableTop + 7, { align: 'right' })
 
     // Ligne prestation
     doc.setFillColor(255, 255, 255)
@@ -179,7 +177,7 @@ export default function Factures() {
     const descLines = doc.splitTextToSize(descriptionText, 120)
     doc.text(descLines, 27, tableTop + 20)
     doc.setFont('helvetica', 'bold')
-    doc.text(`${montantHT.toFixed(2)} €`, 190, tableTop + 20, { align: 'right' })
+    doc.text(`${montantHT.toFixed(2)} €`, 187, tableTop + 20, { align: 'right' })
 
     doc.setDrawColor(229, 231, 235)
     doc.line(20, tableTop + 28, 190, tableTop + 28)
@@ -187,7 +185,6 @@ export default function Factures() {
     // ── TOTAUX ──
     let y = tableTop + 45
 
-    // Montant HT
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(10)
     doc.setTextColor(107, 114, 128)
@@ -196,7 +193,6 @@ export default function Factures() {
     doc.text(`${montantHT.toFixed(2)} €`, 190, y, { align: 'right' })
     y += 10
 
-    // TVA
     doc.setTextColor(107, 114, 128)
     doc.text(`TVA (${tauxTVA}%)`, 130, y)
     doc.setTextColor(17, 24, 39)
@@ -217,7 +213,6 @@ export default function Factures() {
     doc.text(`${montantTTC.toFixed(2)} €`, 188, y + 4, { align: 'right' })
     y += 22
 
-    // Mention TVA 0%
     if (tauxTVA === 0) {
       doc.setFontSize(8)
       doc.setFont('helvetica', 'italic')
