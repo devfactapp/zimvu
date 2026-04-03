@@ -11,11 +11,32 @@ export default function Profil() {
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [stats, setStats] = useState({ factures: 0, clients: 0, chiffreAffaires: 0 })
 
+  // Profil éditable
+  const [profil, setProfil] = useState({ prenom: '', nom: '', telephone: '' })
+  const [saving, setSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+
   useEffect(() => {
     const fetchData = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
       setUser(session.user)
+
+      // Charger le profil
+      const { data: profilData } = await supabase
+        .from('profils')
+        .select('prenom, nom, telephone')
+        .eq('id', session.user.id)
+        .single()
+
+      if (profilData) {
+        setProfil({
+          prenom: profilData.prenom || '',
+          nom: profilData.nom || '',
+          telephone: profilData.telephone || '',
+        })
+      }
+
       const { data: factures } = await supabase.from('factures').select('*')
       const { data: clients } = await supabase.from('clients').select('*')
       if (factures) {
@@ -26,6 +47,27 @@ export default function Profil() {
     }
     fetchData()
   }, [])
+
+  const sauvegarderProfil = async () => {
+    setSaving(true)
+    setSaveSuccess(false)
+    const { data: { session } } = await supabase.auth.getSession()
+
+    const { error } = await supabase
+      .from('profils')
+      .upsert({
+        id: session.user.id,
+        prenom: profil.prenom,
+        nom: profil.nom,
+        telephone: profil.telephone,
+      }, { onConflict: 'id' })
+
+    setSaving(false)
+    if (!error) {
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    }
+  }
 
   const passerAuPro = async () => {
     setCheckoutLoading(true)
@@ -59,14 +101,60 @@ export default function Profil() {
         {/* Infos compte */}
         <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">Informations du compte</h3>
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 mb-6">
             <div className="w-14 h-14 md:w-16 md:h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
-              {user?.email?.charAt(0).toUpperCase()}
+              {profil.prenom ? profil.prenom.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
             </div>
             <div>
               <p className="font-semibold text-gray-800 break-all">{user?.email}</p>
               <p className="text-gray-400 text-sm">Membre depuis {new Date(user?.created_at).toLocaleDateString('fr-FR')}</p>
             </div>
+          </div>
+
+          {/* Formulaire édition */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm text-gray-500 mb-1">Prénom</label>
+              <input
+                type="text"
+                value={profil.prenom}
+                onChange={e => setProfil({ ...profil, prenom: e.target.value })}
+                placeholder="Votre prénom"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-500 mb-1">Nom</label>
+              <input
+                type="text"
+                value={profil.nom}
+                onChange={e => setProfil({ ...profil, nom: e.target.value })}
+                placeholder="Votre nom"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm text-gray-500 mb-1">Téléphone</label>
+              <input
+                type="tel"
+                value={profil.telephone}
+                onChange={e => setProfil({ ...profil, telephone: e.target.value })}
+                placeholder="06 00 00 00 00"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 mt-4">
+            <button
+              onClick={sauvegarderProfil}
+              disabled={saving}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold px-5 py-2 rounded-xl text-sm transition-colors">
+              {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+            </button>
+            {saveSuccess && (
+              <span className="text-green-600 text-sm font-medium">✓ Profil mis à jour</span>
+            )}
           </div>
         </div>
 
@@ -90,7 +178,6 @@ export default function Profil() {
         <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">Mon abonnement</h3>
 
-          {/* Plan actuel */}
           <div className="bg-gray-50 rounded-xl p-4 mb-4">
             <div className="flex items-center gap-3 mb-2">
               <span className="bg-gray-200 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">GRATUIT</span>
@@ -104,7 +191,6 @@ export default function Profil() {
             </ul>
           </div>
 
-          {/* Plan Pro */}
           <div className="bg-blue-50 rounded-xl p-4 mb-4 border border-blue-200">
             <div className="flex items-center gap-3 mb-2">
               <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">⭐ PRO</span>
