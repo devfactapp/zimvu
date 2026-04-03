@@ -127,7 +127,7 @@ export default function Factures() {
       facture.statut === 'En attente' ? [217, 119, 6] : [220, 38, 38]
     doc.setTextColor(...statutColor)
     doc.setFont('helvetica', 'bold')
-    doc.text(`● ${facture.statut}`, 190, 74, { align: 'right' })
+    doc.text(`${facture.statut}`, 185, 74, { align: 'right' })
 
     // Ligne séparatrice de 20 à 190
     doc.setDrawColor(229, 231, 235)
