@@ -13,6 +13,7 @@ export default function Factures() {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
   const [recherche, setRecherche] = useState('')
   const [filtreStatut, setFiltreStatut] = useState('Tous')
+  const [profil, setProfil] = useState(null)
   const menuRef = useRef(null)
 
   const fetchFactures = useCallback(async () => {
@@ -23,6 +24,15 @@ export default function Factures() {
       .select('*')
       .order('created_at', { ascending: false })
     setFactures(data || [])
+
+    // Charger le profil pour le PDF
+    const { data: profilData } = await supabase
+      .from('profils')
+      .select('*')
+      .eq('id', session.user.id)
+      .single()
+    setProfil(profilData)
+
     setLoading(false)
   }, [router])
 
@@ -61,42 +71,179 @@ export default function Factures() {
     setMenuOuvert(null)
     const { default: jsPDF } = await import('jspdf')
     const doc = new jsPDF()
+
     const montantHT = Number(facture.montant_ht || facture.montant || 0)
     const tauxTVA = Number(facture.tva_taux || 0)
     const montantTVA = Number(facture.montant_tva || 0)
     const montantTTC = Number(facture.montant || 0)
-    doc.setFontSize(24); doc.setTextColor(29, 78, 216); doc.text('Zimvu', 20, 25)
-    doc.setFontSize(10); doc.setTextColor(100, 100, 100)
-    doc.text('Votre outil de facturation intelligent', 20, 33)
-    doc.setDrawColor(29, 78, 216); doc.setLineWidth(0.5); doc.line(20, 38, 190, 38)
-    doc.setFontSize(18); doc.setTextColor(30, 30, 30); doc.text('FACTURE', 20, 52)
-    doc.setFontSize(10); doc.setTextColor(100, 100, 100)
-    if (facture.numero) doc.text(`N° : ${facture.numero}`, 130, 52)
-    doc.text(`Date : ${facture.date}`, 20, 62)
-    doc.text(`Statut : ${facture.statut}`, 20, 70)
-    doc.setFontSize(12); doc.setTextColor(30, 30, 30); doc.text('Informations client', 20, 85)
-    doc.setFontSize(10); doc.setTextColor(60, 60, 60)
-    doc.text(`Nom : ${facture.client}`, 20, 93)
-    doc.text(`Email : ${facture.email || 'Non renseigné'}`, 20, 101)
-    doc.setFontSize(12); doc.setTextColor(30, 30, 30); doc.text('Détails de la prestation', 20, 116)
-    doc.setFillColor(245, 247, 250); doc.rect(20, 122, 170, 30, 'F')
-    doc.setFontSize(10); doc.setTextColor(60, 60, 60)
-    doc.text('Description', 25, 132); doc.text('Montant HT', 150, 132)
-    doc.setDrawColor(200, 200, 200); doc.line(20, 136, 190, 136)
-    doc.text(facture.description || '', 25, 146)
-    doc.setTextColor(29, 78, 216); doc.text(`${montantHT.toFixed(2)} €`, 150, 146)
-    doc.setDrawColor(29, 78, 216); doc.line(20, 158, 190, 158)
-    let y = 168
-    doc.setFontSize(10); doc.setTextColor(60, 60, 60); doc.text('Montant HT', 120, y)
-    doc.setTextColor(30, 30, 30); doc.text(`${montantHT.toFixed(2)} €`, 165, y); y += 10
-    doc.setTextColor(60, 60, 60); doc.text(`TVA (${tauxTVA}%)`, 120, y)
-    doc.setTextColor(30, 30, 30); doc.text(`${montantTVA.toFixed(2)} €`, 165, y); y += 10
-    doc.setFillColor(29, 78, 216); doc.rect(115, y - 4, 75, 12, 'F')
-    doc.setFontSize(11); doc.setTextColor(255, 255, 255)
-    doc.text('Total TTC', 120, y + 4); doc.text(`${montantTTC.toFixed(2)} €`, 165, y + 4); y += 18
-    if (tauxTVA === 0) { doc.setFontSize(8); doc.setTextColor(150, 150, 150); doc.text('TVA non applicable — article 293 B du CGI', 20, y + 10) }
-    doc.setFontSize(9); doc.setTextColor(150, 150, 150)
-    doc.text('Merci pour votre confiance — Zimvu.vercel.app', 20, 280)
+
+    const nomEmetteur = profil
+      ? `${profil.prenom || ''} ${profil.nom || ''}`.trim()
+      : ''
+    const entreprise = profil?.nom_entreprise || nomEmetteur || 'Zimvu'
+    const adresse = profil?.adresse || ''
+    const telephone = profil?.telephone || ''
+    const siret = profil?.siret || ''
+
+    // ── HEADER BLOC BLEU ──
+    doc.setFillColor(17, 24, 39)
+    doc.rect(0, 0, 210, 45, 'F')
+
+    doc.setFontSize(22)
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.text('ZIMVU', 20, 20)
+
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(156, 163, 175)
+    doc.text('Logiciel de facturation', 20, 28)
+
+    // Infos émetteur à droite dans le header
+    doc.setFontSize(9)
+    doc.setTextColor(229, 231, 235)
+    if (entreprise) doc.text(entreprise, 190, 14, { align: 'right' })
+    if (adresse) doc.text(adresse, 190, 21, { align: 'right' })
+    if (telephone) doc.text(telephone, 190, 28, { align: 'right' })
+    if (siret) doc.text(`SIRET : ${siret}`, 190, 35, { align: 'right' })
+
+    // ── TITRE FACTURE + NUMÉRO ──
+    doc.setFontSize(26)
+    doc.setTextColor(17, 24, 39)
+    doc.setFont('helvetica', 'bold')
+    doc.text('FACTURE', 20, 65)
+
+    if (facture.numero) {
+      doc.setFontSize(11)
+      doc.setTextColor(99, 102, 241)
+      doc.setFont('helvetica', 'bold')
+      doc.text(facture.numero, 190, 58, { align: 'right' })
+    }
+
+    // Date + Statut
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(107, 114, 128)
+    doc.text(`Date d'émission : ${facture.date}`, 20, 74)
+
+    const statutColor = facture.statut === 'Payée' ? [22, 163, 74] :
+      facture.statut === 'En attente' ? [217, 119, 6] : [220, 38, 38]
+    doc.setTextColor(...statutColor)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`● ${facture.statut}`, 190, 74, { align: 'right' })
+
+    // Ligne séparatrice
+    doc.setDrawColor(229, 231, 235)
+    doc.setLineWidth(0.5)
+    doc.line(20, 80, 190, 80)
+
+    // ── BLOC CLIENT ──
+    doc.setFillColor(249, 250, 251)
+    doc.roundedRect(20, 87, 80, 35, 3, 3, 'F')
+
+    doc.setFontSize(8)
+    doc.setTextColor(107, 114, 128)
+    doc.setFont('helvetica', 'bold')
+    doc.text('FACTURÉ À', 27, 96)
+
+    doc.setFontSize(11)
+    doc.setTextColor(17, 24, 39)
+    doc.setFont('helvetica', 'bold')
+    doc.text(facture.client || '', 27, 105)
+
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(107, 114, 128)
+    if (facture.email) doc.text(facture.email, 27, 113)
+
+    // ── TABLEAU PRESTATIONS ──
+    const tableTop = 135
+
+    // En-tête tableau
+    doc.setFillColor(17, 24, 39)
+    doc.rect(20, tableTop, 170, 10, 'F')
+    doc.setFontSize(9)
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.text('DESCRIPTION', 27, tableTop + 7)
+    doc.text('MONTANT HT', 190, tableTop + 7, { align: 'right' })
+
+    // Ligne prestation
+    doc.setFillColor(255, 255, 255)
+    doc.rect(20, tableTop + 10, 170, 18, 'F')
+    doc.setFontSize(10)
+    doc.setTextColor(17, 24, 39)
+    doc.setFont('helvetica', 'normal')
+
+    const descriptionText = facture.description || 'Prestation de services'
+    const descLines = doc.splitTextToSize(descriptionText, 120)
+    doc.text(descLines, 27, tableTop + 20)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`${montantHT.toFixed(2)} €`, 190, tableTop + 20, { align: 'right' })
+
+    doc.setDrawColor(229, 231, 235)
+    doc.line(20, tableTop + 28, 190, tableTop + 28)
+
+    // ── TOTAUX ──
+    let y = tableTop + 45
+
+    // Montant HT
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    doc.setTextColor(107, 114, 128)
+    doc.text('Montant HT', 130, y)
+    doc.setTextColor(17, 24, 39)
+    doc.text(`${montantHT.toFixed(2)} €`, 190, y, { align: 'right' })
+    y += 10
+
+    // TVA
+    doc.setTextColor(107, 114, 128)
+    doc.text(`TVA (${tauxTVA}%)`, 130, y)
+    doc.setTextColor(17, 24, 39)
+    doc.text(`${montantTVA.toFixed(2)} €`, 190, y, { align: 'right' })
+    y += 5
+
+    doc.setDrawColor(229, 231, 235)
+    doc.line(125, y, 190, y)
+    y += 8
+
+    // Total TTC
+    doc.setFillColor(17, 24, 39)
+    doc.roundedRect(120, y - 5, 72, 14, 2, 2, 'F')
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(255, 255, 255)
+    doc.text('TOTAL TTC', 127, y + 4)
+    doc.text(`${montantTTC.toFixed(2)} €`, 188, y + 4, { align: 'right' })
+    y += 22
+
+    // Mention TVA 0%
+    if (tauxTVA === 0) {
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'italic')
+      doc.setTextColor(150, 150, 150)
+      doc.text('TVA non applicable — article 293 B du CGI', 20, y)
+    }
+
+    // ── FOOTER ──
+    doc.setFillColor(17, 24, 39)
+    doc.rect(0, 272, 210, 25, 'F')
+
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(156, 163, 175)
+    doc.text('Merci pour votre confiance', 20, 281)
+    doc.text('zimvu.fr', 20, 288)
+
+    if (siret) {
+      doc.text(`SIRET : ${siret}`, 105, 281, { align: 'center' })
+    }
+
+    doc.setTextColor(99, 102, 241)
+    doc.text(facture.numero || '', 190, 281, { align: 'right' })
+    doc.setTextColor(156, 163, 175)
+    doc.text(facture.date, 190, 288, { align: 'right' })
+
     doc.save(`facture-${facture.numero || facture.client}-${facture.date}.pdf`)
   }
 
@@ -172,7 +319,6 @@ export default function Factures() {
           </div>
         </div>
 
-        {/* Filtres statut */}
         <div className="flex gap-2 mb-4 flex-wrap">
           {statuts.map(s => (
             <button key={s} onClick={() => setFiltreStatut(s)}
@@ -200,7 +346,6 @@ export default function Factures() {
             </p>
           ) : (
             <>
-              {/* Vue mobile */}
               <div className="md:hidden divide-y divide-gray-100">
                 {facturesFiltrees.map((facture) => (
                   <div key={facture.id} className="p-4">
@@ -232,7 +377,6 @@ export default function Factures() {
                 ))}
               </div>
 
-              {/* Vue desktop */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
