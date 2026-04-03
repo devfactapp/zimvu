@@ -16,13 +16,21 @@ export default function Profil() {
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
 
+  // Changer email
+  const [nouvelEmail, setNouvelEmail] = useState('')
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [emailMsg, setEmailMsg] = useState(null)
+
+  // Changer mot de passe
+  const [mdpLoading, setMdpLoading] = useState(false)
+  const [mdpMsg, setMdpMsg] = useState(null)
+
   useEffect(() => {
     const fetchData = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
       setUser(session.user)
 
-      // Charger le profil
       const { data: profilData } = await supabase
         .from('profils')
         .select('prenom, nom, telephone')
@@ -52,7 +60,6 @@ export default function Profil() {
     setSaving(true)
     setSaveSuccess(false)
     const { data: { session } } = await supabase.auth.getSession()
-
     const { error } = await supabase
       .from('profils')
       .upsert({
@@ -61,11 +68,41 @@ export default function Profil() {
         nom: profil.nom,
         telephone: profil.telephone,
       }, { onConflict: 'id' })
-
     setSaving(false)
     if (!error) {
       setSaveSuccess(true)
       setTimeout(() => setSaveSuccess(false), 3000)
+    }
+  }
+
+  const changerEmail = async () => {
+    if (!nouvelEmail || !nouvelEmail.includes('@')) {
+      setEmailMsg({ type: 'error', text: 'Adresse email invalide.' })
+      return
+    }
+    setEmailLoading(true)
+    setEmailMsg(null)
+    const { error } = await supabase.auth.updateUser({ email: nouvelEmail })
+    setEmailLoading(false)
+    if (error) {
+      setEmailMsg({ type: 'error', text: 'Erreur : ' + error.message })
+    } else {
+      setNouvelEmail('')
+      setEmailMsg({ type: 'success', text: '✓ Un lien de confirmation a été envoyé sur ' + nouvelEmail })
+    }
+  }
+
+  const changerMotDePasse = async () => {
+    setMdpLoading(true)
+    setMdpMsg(null)
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    setMdpLoading(false)
+    if (error) {
+      setMdpMsg({ type: 'error', text: 'Erreur : ' + error.message })
+    } else {
+      setMdpMsg({ type: 'success', text: '✓ Email envoyé sur ' + user.email + ' — vérifiez votre boîte mail.' })
     }
   }
 
@@ -144,7 +181,6 @@ export default function Profil() {
               />
             </div>
           </div>
-
           <div className="flex items-center gap-3 mt-4">
             <button
               onClick={sauvegarderProfil}
@@ -152,8 +188,54 @@ export default function Profil() {
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold px-5 py-2 rounded-xl text-sm transition-colors">
               {saving ? 'Sauvegarde...' : 'Sauvegarder'}
             </button>
-            {saveSuccess && (
-              <span className="text-green-600 text-sm font-medium">✓ Profil mis à jour</span>
+            {saveSuccess && <span className="text-green-600 text-sm font-medium">✓ Profil mis à jour</span>}
+          </div>
+        </div>
+
+        {/* Sécurité du compte */}
+        <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-700 mb-5">Sécurité du compte</h3>
+
+          {/* Changer email */}
+          <div className="mb-6">
+            <p className="text-sm font-medium text-gray-600 mb-2">Changer d'adresse email</p>
+            <p className="text-xs text-gray-400 mb-3">Un email de confirmation sera envoyé à la nouvelle adresse avant toute modification.</p>
+            <div className="flex gap-2">
+              <input
+                type="email"
+                value={nouvelEmail}
+                onChange={e => setNouvelEmail(e.target.value)}
+                placeholder="Nouvelle adresse email"
+                className="flex-1 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+              <button
+                onClick={changerEmail}
+                disabled={emailLoading || !nouvelEmail}
+                className="bg-gray-700 hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors whitespace-nowrap">
+                {emailLoading ? '...' : 'Confirmer'}
+              </button>
+            </div>
+            {emailMsg && (
+              <p className={`text-sm mt-2 ${emailMsg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                {emailMsg.text}
+              </p>
+            )}
+          </div>
+
+          {/* Changer mot de passe */}
+          <div className="border-t border-gray-100 pt-5">
+            <p className="text-sm font-medium text-gray-600 mb-1">Changer de mot de passe</p>
+            <p className="text-xs text-gray-400 mb-3">Un email avec un lien de réinitialisation sera envoyé à <span className="font-medium text-gray-500">{user?.email}</span>.</p>
+            <button
+              onClick={changerMotDePasse}
+              disabled={mdpLoading}
+              className="border border-gray-300 hover:bg-gray-50 disabled:opacity-50 text-gray-700 font-semibold px-5 py-2 rounded-xl text-sm transition-colors">
+              {mdpLoading ? 'Envoi...' : '🔑 Envoyer le lien de réinitialisation'}
+            </button>
+            {mdpMsg && (
+              <p className={`text-sm mt-2 ${mdpMsg.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                {mdpMsg.text}
+              </p>
             )}
           </div>
         </div>
