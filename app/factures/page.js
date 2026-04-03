@@ -156,9 +156,9 @@ export default function Factures() {
     // ── TABLEAU PRESTATIONS ──
     const tableTop = 135
 
-    // En-tête tableau — bande noire de 20 à 190 (largeur 170)
+    /// En-tête tableau — bande noire de 20 à 190 avec bords arrondis
     doc.setFillColor(17, 24, 39)
-    doc.rect(20, tableTop, 170, 10, 'F')
+    doc.roundedRect(20, tableTop, 170, 10, 2, 2, 'F')
     doc.setFontSize(9)
     doc.setTextColor(255, 255, 255)
     doc.setFont('helvetica', 'bold')
