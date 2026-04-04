@@ -85,7 +85,7 @@ export default function Home() {
     setLoading(true)
     setError('')
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `https://zimvu.app/reset-password`,
     })
     if (error) {
       setError('Erreur lors de l\'envoi. Vérifie ton email.')
