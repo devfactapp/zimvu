@@ -228,7 +228,7 @@ export default function Factures() {
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(156, 163, 175)
     doc.text('Merci pour votre confiance', 20, 281)
-    doc.text('zimvu.fr', 20, 288)
+    doc.text('zimvu.app', 20, 288)
 
     if (siret) {
       doc.text(`SIRET : ${siret}`, 105, 281, { align: 'center' })
