@@ -58,15 +58,19 @@ export default function Home() {
       } else {
         if (data.user) {
           // Utiliser le service role via l'API pour contourner RLS
-          const { error: profilError } = await supabase.from('profils').upsert([{
-            id: data.user.id,
-            prenom,
-            nom,
-            telephone,
-            adresse,
-            nom_entreprise: nomEntreprise,
-            siret,
-          }], { onConflict: 'id' })
+          const trialEnd = new Date()
+trialEnd.setDate(trialEnd.getDate() + 14)
+
+const { error: profilError } = await supabase.from('profils').upsert([{
+  id: data.user.id,
+  prenom,
+  nom,
+  telephone,
+  adresse,
+  nom_entreprise: nomEntreprise,
+  siret,
+  pro_trial_end: trialEnd.toISOString(),
+}], { onConflict: 'id' })
           if (profilError) console.error('Erreur profil:', profilError)
         }
         try {
