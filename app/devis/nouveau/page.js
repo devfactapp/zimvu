@@ -38,31 +38,27 @@ export default function NouveauDevis() {
       const { data } = await supabase.from('clients').select('*').order('nom')
       setClients(data || [])
 
-      // Vérifier le plan
       const planInfo = await getUserPlan(supabase, session.user.id)
       setPlan(planInfo)
 
-      // Vérifier la limite
-      const debutMois = new Date()
-debutMois.setDate(1)
-debutMois.setHours(0, 0, 0, 0)
+      const maintenant = new Date()
+      const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1).toISOString()
 
-const { data: devisData } = await supabase
-  .from('devis')
-  .select('id')
-  .eq('user_id', session.user.id)
-  .gte('created_at', debutMois.toISOString())
+      const { data: devisData } = await supabase
+        .from('devis')
+        .select('id, created_at')
+        .eq('user_id', session.user.id)
+        .gte('created_at', debutMois)
 
-const nb = devisData?.length || 0
-setNbDevis(nb)
+      const nb = devisData?.length || 0
+      setNbDevis(nb)
 
-const isAdmin = session.user.email === 'devfact.app@gmail.com'
-const isTrial = planInfo.plan === 'trial'
+      const isAdmin = session.user.email === 'devfact.app@gmail.com'
+      const isTrial = planInfo.plan === 'trial'
 
-if (nb >= 3 && !isAdmin && !isTrial) {
-  setLimitAtteinte(true)
-  router.push('/profil')
-}
+      if (nb >= 3 && !isAdmin && !isTrial) {
+        setLimitAtteinte(true)
+      }
     }
     fetchClients()
   }, [])
@@ -79,7 +75,11 @@ if (nb >= 3 && !isAdmin && !isTrial) {
   const montantTTC = montantHT + montantTVA
 
   const handleSubmit = async () => {
-    if (limitAtteinte) return
+    if (limitAtteinte) {
+      alert('🔒 Vous avez atteint votre limite de 3 devis ce mois-ci. Passez au Pro pour continuer !')
+      router.push('/profil')
+      return
+    }
     if (!form.client || !form.montant_ht || !form.date) {
       alert('Merci de remplir les champs obligatoires (client, montant, date)')
       return
@@ -136,7 +136,7 @@ if (nb >= 3 && !isAdmin && !isTrial) {
             <div className="text-3xl mb-3">🔒</div>
             <h3 className="text-lg font-semibold text-orange-700 mb-2">Limite du plan gratuit atteinte</h3>
             <p className="text-orange-600 text-sm mb-4">
-              Vous avez utilisé vos <strong>3 devis gratuits</strong>. Passez au plan Pro pour créer des devis illimités.
+              Vous avez utilisé vos <strong>3 devis ce mois-ci</strong>. Passez au plan Pro pour créer des devis illimités.
             </p>
             <button onClick={() => router.push('/profil')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold text-sm">
@@ -149,7 +149,7 @@ if (nb >= 3 && !isAdmin && !isTrial) {
         {!limitAtteinte && plan.plan === 'gratuit' && (
           <div className="bg-blue-50 rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
             <p className="text-blue-700 text-sm">
-              Plan gratuit : <strong>{nbDevis}/3 devis</strong> utilisés
+              Plan gratuit : <strong>{nbDevis}/3 devis</strong> ce mois-ci
             </p>
             <span onClick={() => router.push('/profil')}
               className="text-blue-600 text-xs cursor-pointer hover:underline font-medium">
@@ -159,8 +159,6 @@ if (nb >= 3 && !isAdmin && !isTrial) {
         )}
 
         <div className={`bg-white rounded-2xl shadow p-6 space-y-4 ${limitAtteinte ? 'opacity-50 pointer-events-none' : ''}`}>
-
-          {/* Client */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Client *</label>
             <input list="liste-clients" placeholder="Nom du client"
@@ -171,7 +169,6 @@ if (nb >= 3 && !isAdmin && !isTrial) {
             </datalist>
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Email client</label>
             <input type="email" placeholder="email@client.fr"
@@ -179,7 +176,6 @@ if (nb >= 3 && !isAdmin && !isTrial) {
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
 
-          {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
             <textarea placeholder="Décrivez la prestation..."
@@ -188,7 +184,6 @@ if (nb >= 3 && !isAdmin && !isTrial) {
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
           </div>
 
-          {/* Montant HT + TVA */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Montant HT (€) *</label>
@@ -209,7 +204,6 @@ if (nb >= 3 && !isAdmin && !isTrial) {
             </div>
           </div>
 
-          {/* Récapitulatif */}
           {montantHT > 0 && (
             <div className="bg-gray-50 rounded-xl p-4 space-y-2">
               <h3 className="text-sm font-semibold text-gray-600 mb-3">Récapitulatif</h3>
@@ -233,7 +227,6 @@ if (nb >= 3 && !isAdmin && !isTrial) {
             </div>
           )}
 
-          {/* Dates */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Date du devis *</label>
@@ -249,7 +242,6 @@ if (nb >= 3 && !isAdmin && !isTrial) {
             </div>
           </div>
 
-          {/* Statut */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
             <select value={form.statut}
@@ -262,7 +254,6 @@ if (nb >= 3 && !isAdmin && !isTrial) {
             </select>
           </div>
 
-          {/* Boutons */}
           <div className="flex gap-3 pt-2">
             <button onClick={handleSubmit} disabled={saving || limitAtteinte}
               className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 rounded-lg text-sm">
