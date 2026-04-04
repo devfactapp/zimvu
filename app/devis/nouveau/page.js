@@ -43,18 +43,26 @@ export default function NouveauDevis() {
       setPlan(planInfo)
 
       // Vérifier la limite
-      const { data: devisData } = await supabase
-        .from('devis')
-        .select('id')
-        .eq('user_id', session.user.id)
+      const debutMois = new Date()
+debutMois.setDate(1)
+debutMois.setHours(0, 0, 0, 0)
 
-      const nb = devisData?.length || 0
-      setNbDevis(nb)
+const { data: devisData } = await supabase
+  .from('devis')
+  .select('id')
+  .eq('user_id', session.user.id)
+  .gte('created_at', debutMois.toISOString())
 
-      const isAdmin = session.user.email === 'devfact.app@gmail.com'
-      const isTrial = planInfo.plan === 'trial'
+const nb = devisData?.length || 0
+setNbDevis(nb)
 
-      if (nb >= 3 && !isAdmin && !isTrial) setLimitAtteinte(true)
+const isAdmin = session.user.email === 'devfact.app@gmail.com'
+const isTrial = planInfo.plan === 'trial'
+
+if (nb >= 3 && !isAdmin && !isTrial) {
+  setLimitAtteinte(true)
+  router.push('/profil')
+}
     }
     fetchClients()
   }, [])
