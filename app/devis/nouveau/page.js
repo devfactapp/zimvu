@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../supabase'
 import Navbar from '../../components/Navbar'
+import { getUserPlan } from '../../utils/planUtils'
 
 const TAUX_TVA = [
   { label: 'Sans TVA (auto-entrepreneur)', value: 0 },
@@ -15,6 +16,9 @@ export default function NouveauDevis() {
   const router = useRouter()
   const [clients, setClients] = useState([])
   const [saving, setSaving] = useState(false)
+  const [limitAtteinte, setLimitAtteinte] = useState(false)
+  const [nbDevis, setNbDevis] = useState(0)
+  const [plan, setPlan] = useState({ plan: 'gratuit', joursRestants: 0 })
   const [form, setForm] = useState({
     client: '',
     email: '',
@@ -30,8 +34,27 @@ export default function NouveauDevis() {
     const fetchClients = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/'); return }
+
       const { data } = await supabase.from('clients').select('*').order('nom')
       setClients(data || [])
+
+      // Vérifier le plan
+      const planInfo = await getUserPlan(supabase, session.user.id)
+      setPlan(planInfo)
+
+      // Vérifier la limite
+      const { data: devisData } = await supabase
+        .from('devis')
+        .select('id')
+        .eq('user_id', session.user.id)
+
+      const nb = devisData?.length || 0
+      setNbDevis(nb)
+
+      const isAdmin = session.user.email === 'devfact.app@gmail.com'
+      const isTrial = planInfo.plan === 'trial'
+
+      if (nb >= 3 && !isAdmin && !isTrial) setLimitAtteinte(true)
     }
     fetchClients()
   }, [])
@@ -42,13 +65,13 @@ export default function NouveauDevis() {
     setForm({ ...form, client: nomClient, email: clientTrouve?.email || '' })
   }
 
-  // Calculs automatiques
   const montantHT = parseFloat(form.montant_ht) || 0
   const tauxTVA = parseFloat(form.tva_taux) || 0
   const montantTVA = (montantHT * tauxTVA) / 100
   const montantTTC = montantHT + montantTVA
 
   const handleSubmit = async () => {
+    if (limitAtteinte) return
     if (!form.client || !form.montant_ht || !form.date) {
       alert('Merci de remplir les champs obligatoires (client, montant, date)')
       return
@@ -86,7 +109,48 @@ export default function NouveauDevis() {
 
         <h2 className="text-xl font-semibold text-gray-700 mb-6">Nouveau devis</h2>
 
-        <div className="bg-white rounded-2xl shadow p-6 space-y-4">
+        {/* Bandeau trial */}
+        {plan.plan === 'trial' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
+            <p className="text-blue-700 text-sm">
+              ⭐ Essai Pro — <strong>Devis illimités</strong> · {plan.joursRestants} jour{plan.joursRestants > 1 ? 's' : ''} restant{plan.joursRestants > 1 ? 's' : ''}
+            </p>
+            <span onClick={() => router.push('/profil')}
+              className="text-blue-600 text-xs cursor-pointer hover:underline font-medium">
+              Passer au Pro →
+            </span>
+          </div>
+        )}
+
+        {/* Bannière limite atteinte */}
+        {limitAtteinte && (
+          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 mb-6 text-center">
+            <div className="text-3xl mb-3">🔒</div>
+            <h3 className="text-lg font-semibold text-orange-700 mb-2">Limite du plan gratuit atteinte</h3>
+            <p className="text-orange-600 text-sm mb-4">
+              Vous avez utilisé vos <strong>3 devis gratuits</strong>. Passez au plan Pro pour créer des devis illimités.
+            </p>
+            <button onClick={() => router.push('/profil')}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold text-sm">
+              🚀 Passer au Pro — 9€/mois
+            </button>
+          </div>
+        )}
+
+        {/* Compteur plan gratuit */}
+        {!limitAtteinte && plan.plan === 'gratuit' && (
+          <div className="bg-blue-50 rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
+            <p className="text-blue-700 text-sm">
+              Plan gratuit : <strong>{nbDevis}/3 devis</strong> utilisés
+            </p>
+            <span onClick={() => router.push('/profil')}
+              className="text-blue-600 text-xs cursor-pointer hover:underline font-medium">
+              Passer au Pro →
+            </span>
+          </div>
+        )}
+
+        <div className={`bg-white rounded-2xl shadow p-6 space-y-4 ${limitAtteinte ? 'opacity-50 pointer-events-none' : ''}`}>
 
           {/* Client */}
           <div>
@@ -192,8 +256,8 @@ export default function NouveauDevis() {
 
           {/* Boutons */}
           <div className="flex gap-3 pt-2">
-            <button onClick={handleSubmit} disabled={saving}
-              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg text-sm">
+            <button onClick={handleSubmit} disabled={saving || limitAtteinte}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 rounded-lg text-sm">
               {saving ? 'Enregistrement...' : 'Enregistrer le devis'}
             </button>
             <button onClick={() => router.push('/devis')}
