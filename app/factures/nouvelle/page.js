@@ -42,15 +42,14 @@ export default function NouvelleFacture() {
       setPlan(planInfo)
 
       // Vérifier la limite seulement si pas en trial et pas admin
-      const debutMois = new Date()
-debutMois.setDate(1)
-debutMois.setHours(0, 0, 0, 0)
+      const maintenant = new Date()
+const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1).toISOString()
 
 const { data: factures } = await supabase
   .from('factures')
-  .select('id')
+  .select('id, created_at')
   .eq('user_id', session.user.id)
-  .gte('created_at', debutMois.toISOString())
+  .gte('created_at', debutMois)
 
 const nb = factures?.length || 0
 setNbFactures(nb)
@@ -82,7 +81,11 @@ if (nb >= 3 && !isAdmin && !isTrial) {
   const montantTTC = montantHT + montantTVA
 
   const creerFacture = async () => {
-    if (limitAtteinte) return
+  if (limitAtteinte) {
+    alert('🔒 Vous avez atteint votre limite de 3 factures ce mois-ci. Passez au Pro pour continuer !')
+    router.push('/profil')
+    return
+  }
     if (!facture.client || !facture.montant_ht || !facture.date) {
       setError('Veuillez remplir les champs obligatoires')
       return
