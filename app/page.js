@@ -70,7 +70,7 @@ export default function Home() {
         } catch (e) {
           console.error('Email non envoyé:', e)
         }
-        setError('Vérifie ton email pour confirmer ton compte !')
+        setError('✓ Vérifie ton email pour confirmer ton compte !')
       }
     } else {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -94,6 +94,8 @@ export default function Home() {
     }
     setLoading(false)
   }
+
+  const inputClass = "w-full border-2 border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-colors"
 
   return (
     <div className="min-h-screen bg-white">
@@ -175,9 +177,7 @@ export default function Home() {
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h3 className="text-3xl font-bold text-gray-900 mb-4">Un prix simple et transparent</h3>
           <p className="text-gray-500 mb-10">Commencez gratuitement, passez au Pro quand vous êtes prêt.</p>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Plan Gratuit */}
             <div className="bg-white rounded-2xl shadow p-8 text-left">
               <p className="text-gray-500 text-sm font-medium mb-2">GRATUIT</p>
               <p className="text-5xl font-bold text-gray-900 mb-1">0€</p>
@@ -195,8 +195,6 @@ export default function Home() {
                 Commencer gratuitement
               </button>
             </div>
-
-            {/* Plan Pro */}
             <div className="bg-blue-600 rounded-2xl shadow p-8 text-left relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full">
                 ⭐ RECOMMANDÉ
@@ -259,10 +257,10 @@ export default function Home() {
                     <p className="text-gray-500 text-sm mb-4">Entre ton email et on t'envoie un lien de réinitialisation.</p>
                     <input type="email" placeholder="Adresse e-mail *" value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      className={inputClass} />
                     {error && <p className="text-sm text-center text-red-500">{error}</p>}
                     <button onClick={handleResetPassword} disabled={loading}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl">
                       {loading ? 'Envoi...' : 'Envoyer le lien'}
                     </button>
                     <p className="text-center text-sm text-gray-500">
@@ -275,38 +273,40 @@ export default function Home() {
               </div>
             ) : (
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-6">{isSignUp ? 'Créer un compte' : 'Se connecter'}</h3>
-                <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-6">
+                  {isSignUp ? 'Créer un compte' : 'Se connecter'}
+                </h3>
+                <div className="space-y-3">
                   {isSignUp && (
                     <>
                       <div className="grid grid-cols-2 gap-3">
                         <input type="text" placeholder="Prénom *" value={prenom}
                           onChange={(e) => setPrenom(e.target.value)}
-                          className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          className="border-2 border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-colors" />
                         <input type="text" placeholder="Nom *" value={nom}
                           onChange={(e) => setNom(e.target.value)}
-                          className="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                          className="border-2 border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:bg-white transition-colors" />
                       </div>
                       <input type="tel" placeholder="Téléphone *" value={telephone}
                         onChange={(e) => setTelephone(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        className={inputClass} />
                       <input type="text" placeholder="Adresse postale (optionnel)" value={adresse}
                         onChange={(e) => setAdresse(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        className={inputClass} />
                       <input type="text" placeholder="Nom de l'entreprise (optionnel)" value={nomEntreprise}
                         onChange={(e) => setNomEntreprise(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        className={inputClass} />
                       <input type="text" placeholder="Numéro SIRET (optionnel)" value={siret}
                         onChange={(e) => setSiret(e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        className={inputClass} />
                     </>
                   )}
                   <input type="email" placeholder="Adresse e-mail *" value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    className={inputClass} />
                   <input type="password" placeholder="Mot de passe *" value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    className={inputClass} />
                   {!isSignUp && (
                     <p className="text-right">
                       <span onClick={() => { setMotDePasseOublie(true); setError('') }}
@@ -315,15 +315,19 @@ export default function Home() {
                       </span>
                     </p>
                   )}
-                  {error && <p className="text-sm text-center text-red-500">{error}</p>}
+                  {error && (
+                    <p className={`text-sm text-center font-medium ${error.startsWith('✓') ? 'text-green-600' : 'text-red-500'}`}>
+                      {error}
+                    </p>
+                  )}
                   <button onClick={handleAuth} disabled={loading}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 rounded-xl transition-colors">
                     {loading ? 'Chargement...' : isSignUp ? 'Créer mon compte' : 'Se connecter'}
                   </button>
                 </div>
                 <p className="text-center text-sm text-gray-500 mt-4">
                   {isSignUp ? 'Déjà un compte ?' : 'Pas encore de compte ?'}{' '}
-                  <span onClick={() => { setIsSignUp(!isSignUp); setError('') }} className="text-blue-600 cursor-pointer font-medium">
+                  <span onClick={() => { setIsSignUp(!isSignUp); setError('') }} className="text-blue-600 cursor-pointer font-medium hover:underline">
                     {isSignUp ? 'Se connecter' : 'Créer un compte'}
                   </span>
                 </p>
