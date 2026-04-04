@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../../supabase'
 import Navbar from '../../components/Navbar'
+import { getUserPlan } from '../../utils/planUtils'
 
 const TAUX_TVA = [
   { label: 'Sans TVA (auto-entrepreneur)', value: 0 },
@@ -26,6 +27,7 @@ export default function NouvelleFacture() {
   const [error, setError] = useState('')
   const [limitAtteinte, setLimitAtteinte] = useState(false)
   const [nbFactures, setNbFactures] = useState(0)
+  const [plan, setPlan] = useState({ plan: 'gratuit', joursRestants: 0 })
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -35,7 +37,11 @@ export default function NouvelleFacture() {
       const { data: clientsData } = await supabase.from('clients').select('*').order('nom')
       setClients(clientsData || [])
 
-      // Vérifier la limite du plan gratuit
+      // Vérifier le plan
+      const planInfo = await getUserPlan(supabase, session.user.id)
+      setPlan(planInfo)
+
+      // Vérifier la limite seulement si pas en trial et pas admin
       const { data: factures } = await supabase
         .from('factures')
         .select('id')
@@ -43,7 +49,11 @@ export default function NouvelleFacture() {
 
       const nb = factures?.length || 0
       setNbFactures(nb)
-      if (nb >= 3 && session.user.email !== 'devfact.app@gmail.com') setLimitAtteinte(true)
+
+      const isAdmin = session.user.email === 'devfact.app@gmail.com'
+      const isTrial = planInfo.plan === 'trial'
+
+      if (nb >= 3 && !isAdmin && !isTrial) setLimitAtteinte(true)
     }
     fetchClients()
   }, [])
@@ -104,6 +114,19 @@ export default function NouvelleFacture() {
           <button onClick={() => router.push('/factures')} className="text-gray-500 hover:text-gray-700 text-sm">← Retour</button>
         </div>
 
+        {/* Bannière trial */}
+        {plan.plan === 'trial' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
+            <p className="text-blue-700 text-sm">
+              ⭐ Essai Pro — <strong>Factures illimitées</strong> · {plan.joursRestants} jour{plan.joursRestants > 1 ? 's' : ''} restant{plan.joursRestants > 1 ? 's' : ''}
+            </p>
+            <span onClick={() => router.push('/profil')}
+              className="text-blue-600 text-xs cursor-pointer hover:underline font-medium">
+              Passer au Pro →
+            </span>
+          </div>
+        )}
+
         {/* Bannière limite atteinte */}
         {limitAtteinte && (
           <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 mb-6 text-center">
@@ -120,8 +143,8 @@ export default function NouvelleFacture() {
           </div>
         )}
 
-        {/* Compteur */}
-        {!limitAtteinte && (
+        {/* Compteur plan gratuit */}
+        {!limitAtteinte && plan.plan === 'gratuit' && (
           <div className="bg-blue-50 rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
             <p className="text-blue-700 text-sm">
               Plan gratuit : <strong>{nbFactures}/3 factures</strong> utilisées
