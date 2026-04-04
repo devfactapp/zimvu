@@ -14,6 +14,7 @@ export default function Devis() {
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
   const [recherche, setRecherche] = useState('')
   const [filtreStatut, setFiltreStatut] = useState('Tous')
+  const [profil, setProfil] = useState(null)
   const menuRef = useRef(null)
 
   const fetchDevis = useCallback(async () => {
@@ -31,6 +32,15 @@ export default function Devis() {
         return d
       }))
     }
+
+    // Charger le profil pour le PDF
+    const { data: profilData } = await supabase
+      .from('profils')
+      .select('*')
+      .eq('id', session.user.id)
+      .single()
+    setProfil(profilData)
+
     setLoading(false)
   }, [router])
 
@@ -91,40 +101,182 @@ export default function Devis() {
     setMenuOuvert(null)
     const { default: jsPDF } = await import('jspdf')
     const doc = new jsPDF()
-    doc.setFontSize(24); doc.setTextColor(29, 78, 216); doc.text('Zimvu', 20, 25)
-    doc.setFontSize(10); doc.setTextColor(100, 100, 100)
-    doc.text('Votre outil de facturation intelligent', 20, 33)
-    doc.setDrawColor(29, 78, 216); doc.setLineWidth(0.5); doc.line(20, 38, 190, 38)
-    doc.setFontSize(18); doc.setTextColor(30, 30, 30); doc.text('DEVIS', 20, 52)
-    doc.setFontSize(10); doc.setTextColor(100, 100, 100)
-    if (devis.numero) doc.text(`N° : ${devis.numero}`, 130, 52)
-    doc.text(`Date : ${devis.date}`, 20, 62)
-    doc.text(`Valide jusqu'au : ${devis.date_validite || 'Non défini'}`, 20, 70)
-    doc.text(`Statut : ${devis.statut}`, 20, 78)
-    doc.setFontSize(12); doc.setTextColor(30, 30, 30); doc.text('Informations client', 20, 93)
-    doc.setFontSize(10); doc.setTextColor(60, 60, 60)
-    doc.text(`Nom : ${devis.client}`, 20, 101)
-    doc.text(`Email : ${devis.email || 'Non renseigné'}`, 20, 109)
-    doc.setFontSize(12); doc.setTextColor(30, 30, 30); doc.text('Détails de la prestation', 20, 124)
-    doc.setFillColor(245, 247, 250); doc.rect(20, 130, 170, 30, 'F')
-    doc.setFontSize(10); doc.setTextColor(60, 60, 60)
-    doc.text('Description', 25, 140); doc.text('Montant HT', 150, 140)
-    doc.setDrawColor(200, 200, 200); doc.line(20, 144, 190, 144)
-    doc.text(devis.description || '', 25, 154)
-    doc.setTextColor(29, 78, 216); doc.text(`${Number(devis.montant_ht || devis.montant).toFixed(2)} €`, 150, 154)
-    doc.setDrawColor(29, 78, 216); doc.line(20, 166, 190, 166)
-    let y = 176
-    doc.setFontSize(10); doc.setTextColor(60, 60, 60); doc.text('Montant HT', 120, y)
-    doc.setTextColor(30, 30, 30); doc.text(`${Number(devis.montant_ht || devis.montant).toFixed(2)} €`, 165, y); y += 10
-    doc.setTextColor(60, 60, 60); doc.text(`TVA (${devis.tva_taux || 0}%)`, 120, y)
-    doc.setTextColor(30, 30, 30); doc.text(`${Number(devis.montant_tva || 0).toFixed(2)} €`, 165, y); y += 10
-    doc.setFillColor(29, 78, 216); doc.rect(115, y - 4, 75, 12, 'F')
-    doc.setFontSize(11); doc.setTextColor(255, 255, 255)
-    doc.text('Total TTC', 120, y + 4); doc.text(`${Number(devis.montant).toFixed(2)} €`, 165, y + 4)
-    if (devis.tva_taux === 0) { doc.setFontSize(8); doc.setTextColor(150, 150, 150); doc.text('TVA non applicable — article 293 B du CGI', 20, y + 20) }
-    doc.setFontSize(9); doc.setTextColor(150, 150, 150)
-    doc.text('Ce devis est valable jusqu\'à la date de validité indiquée.', 20, 240)
-    doc.text('Merci pour votre confiance — Zimvu.vercel.app', 20, 248)
+
+    const montantHT = Number(devis.montant_ht || devis.montant || 0)
+    const tauxTVA = Number(devis.tva_taux || 0)
+    const montantTVA = Number(devis.montant_tva || 0)
+    const montantTTC = Number(devis.montant || 0)
+
+    const nomEmetteur = profil ? `${profil.prenom || ''} ${profil.nom || ''}`.trim() : ''
+    const entreprise = profil?.nom_entreprise || nomEmetteur || 'Zimvu'
+    const adresse = profil?.adresse || ''
+    const telephone = profil?.telephone || ''
+    const siret = profil?.siret || ''
+
+    // ── HEADER ──
+    doc.setFillColor(17, 24, 39)
+    doc.rect(0, 0, 210, 45, 'F')
+
+    doc.setFontSize(22)
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.text('ZIMVU', 20, 20)
+
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(156, 163, 175)
+    doc.text('Logiciel de facturation', 20, 28)
+
+    doc.setFontSize(9)
+    doc.setTextColor(229, 231, 235)
+    if (entreprise) doc.text(entreprise, 190, 14, { align: 'right' })
+    if (adresse) doc.text(adresse, 190, 21, { align: 'right' })
+    if (telephone) doc.text(telephone, 190, 28, { align: 'right' })
+    if (siret) doc.text(`SIRET : ${siret}`, 190, 35, { align: 'right' })
+
+    // ── TITRE DEVIS + NUMÉRO ──
+    doc.setFontSize(26)
+    doc.setTextColor(17, 24, 39)
+    doc.setFont('helvetica', 'bold')
+    doc.text('DEVIS', 20, 65)
+
+    if (devis.numero) {
+      doc.setFontSize(11)
+      doc.setTextColor(99, 102, 241)
+      doc.setFont('helvetica', 'bold')
+      doc.text(devis.numero, 190, 58, { align: 'right' })
+    }
+
+    // Date + validité
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(107, 114, 128)
+    doc.text(`Date d'émission : ${devis.date}`, 20, 74)
+    doc.text(`Valide jusqu'au : ${devis.date_validite || 'Non défini'}`, 20, 81)
+
+    // Statut
+    const statutColor = devis.statut === 'Accepté' ? [22, 163, 74] :
+      devis.statut === 'Envoyé' ? [37, 99, 235] :
+      devis.statut === 'Refusé' ? [220, 38, 38] :
+      devis.statut === 'Expiré' ? [234, 88, 12] : [107, 114, 128]
+    doc.setTextColor(...statutColor)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`${devis.statut}`, 185, 74, { align: 'right' })
+
+    // Ligne séparatrice
+    doc.setDrawColor(229, 231, 235)
+    doc.setLineWidth(0.5)
+    doc.line(20, 88, 190, 88)
+
+    // ── BLOC CLIENT ──
+    doc.setFillColor(249, 250, 251)
+    doc.roundedRect(20, 95, 80, 35, 3, 3, 'F')
+
+    doc.setFontSize(8)
+    doc.setTextColor(107, 114, 128)
+    doc.setFont('helvetica', 'bold')
+    doc.text('DEVIS POUR', 27, 104)
+
+    doc.setFontSize(11)
+    doc.setTextColor(17, 24, 39)
+    doc.setFont('helvetica', 'bold')
+    doc.text(devis.client || '', 27, 113)
+
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(107, 114, 128)
+    if (devis.email) doc.text(devis.email, 27, 121)
+
+    // ── TABLEAU PRESTATIONS ──
+    const tableTop = 143
+
+    doc.setFillColor(17, 24, 39)
+    doc.roundedRect(20, tableTop, 170, 10, 2, 2, 'F')
+    doc.setFontSize(9)
+    doc.setTextColor(255, 255, 255)
+    doc.setFont('helvetica', 'bold')
+    doc.text('DESCRIPTION', 27, tableTop + 7)
+    doc.text('MONTANT HT', 187, tableTop + 7, { align: 'right' })
+
+    doc.setFillColor(255, 255, 255)
+    doc.rect(20, tableTop + 10, 170, 18, 'F')
+    doc.setFontSize(10)
+    doc.setTextColor(17, 24, 39)
+    doc.setFont('helvetica', 'normal')
+
+    const descriptionText = devis.description || 'Prestation de services'
+    const descLines = doc.splitTextToSize(descriptionText, 120)
+    doc.text(descLines, 27, tableTop + 20)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`${montantHT.toFixed(2)} €`, 187, tableTop + 20, { align: 'right' })
+
+    doc.setDrawColor(229, 231, 235)
+    doc.line(20, tableTop + 28, 190, tableTop + 28)
+
+    // ── TOTAUX ──
+    let y = tableTop + 45
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    doc.setTextColor(107, 114, 128)
+    doc.text('Montant HT', 130, y)
+    doc.setTextColor(17, 24, 39)
+    doc.text(`${montantHT.toFixed(2)} €`, 190, y, { align: 'right' })
+    y += 10
+
+    doc.setTextColor(107, 114, 128)
+    doc.text(`TVA (${tauxTVA}%)`, 130, y)
+    doc.setTextColor(17, 24, 39)
+    doc.text(`${montantTVA.toFixed(2)} €`, 190, y, { align: 'right' })
+    y += 5
+
+    doc.setDrawColor(229, 231, 235)
+    doc.line(125, y, 190, y)
+    y += 8
+
+    // Total TTC
+    doc.setFillColor(17, 24, 39)
+    doc.roundedRect(120, y - 5, 72, 14, 2, 2, 'F')
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(255, 255, 255)
+    doc.text('TOTAL TTC', 127, y + 4)
+    doc.text(`${montantTTC.toFixed(2)} €`, 188, y + 4, { align: 'right' })
+    y += 22
+
+    if (tauxTVA === 0) {
+      doc.setFontSize(8)
+      doc.setFont('helvetica', 'italic')
+      doc.setTextColor(150, 150, 150)
+      doc.text('TVA non applicable — article 293 B du CGI', 20, y)
+      y += 10
+    }
+
+    // Note validité
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'italic')
+    doc.setTextColor(150, 150, 150)
+    doc.text(`Ce devis est valable jusqu'au ${devis.date_validite || 'date non définie'}.`, 20, y + 5)
+
+    // ── FOOTER ──
+    doc.setFillColor(17, 24, 39)
+    doc.rect(0, 272, 210, 25, 'F')
+
+    doc.setFontSize(8)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(156, 163, 175)
+    doc.text('Merci pour votre confiance', 20, 281)
+    doc.text('zimvu.app', 20, 288)
+
+    if (siret) {
+      doc.text(`SIRET : ${siret}`, 105, 281, { align: 'center' })
+    }
+
+    doc.setTextColor(99, 102, 241)
+    doc.text(devis.numero || '', 190, 281, { align: 'right' })
+    doc.setTextColor(156, 163, 175)
+    doc.text(devis.date, 190, 288, { align: 'right' })
+
     doc.save(`devis-${devis.numero || devis.client}-${devis.date}.pdf`)
   }
 
@@ -218,7 +370,6 @@ export default function Devis() {
           </div>
         </div>
 
-        {/* Filtres statut */}
         <div className="flex gap-2 mb-4 flex-wrap">
           {statuts.map(s => (
             <button key={s} onClick={() => setFiltreStatut(s)}
@@ -254,7 +405,6 @@ export default function Devis() {
             </div>
           ) : (
             <>
-              {/* Vue mobile */}
               <div className="md:hidden divide-y divide-gray-100">
                 {devisFiltres.map((d) => (
                   <div key={d.id} className="p-4">
@@ -279,7 +429,6 @@ export default function Devis() {
                 ))}
               </div>
 
-              {/* Vue desktop */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
