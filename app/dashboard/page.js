@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../supabase'
 import Navbar from '../components/Navbar'
+import { getUserPlan } from '../utils/planUtils'
 
 const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
 
@@ -11,6 +12,7 @@ export default function Dashboard() {
   const [user, setUser] = useState(null)
   const [profil, setProfil] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [plan, setPlan] = useState({ plan: 'gratuit', joursRestants: 0 })
   const [stats, setStats] = useState({
     chiffreAffaires: 0,
     facturesEnvoyees: 0,
@@ -32,6 +34,10 @@ export default function Dashboard() {
         .eq('id', session.user.id)
         .single()
       setProfil(profilData)
+
+      // Vérifier le plan
+      const planInfo = await getUserPlan(supabase, session.user.id)
+      setPlan(planInfo)
 
       const { data: factures } = await supabase
         .from('factures')
@@ -84,6 +90,24 @@ export default function Dashboard() {
       <Navbar pageCourante="/dashboard" />
 
       <div className="max-w-6xl mx-auto px-4 py-6">
+
+        {/* Bandeau trial */}
+        {plan.plan === 'trial' && (
+          <div className="bg-blue-600 text-white rounded-2xl p-4 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold text-lg">⭐ Essai Pro en cours</p>
+              <p className="text-blue-100 text-sm">
+                Il vous reste <strong>{plan.joursRestants} jour{plan.joursRestants > 1 ? 's' : ''}</strong> d'essai Pro gratuit. Profitez de toutes les fonctionnalités !
+              </p>
+            </div>
+            <button
+              onClick={() => router.push('/profil')}
+              className="bg-white text-blue-600 font-semibold px-5 py-2 rounded-xl text-sm whitespace-nowrap hover:bg-blue-50 transition-colors">
+              Passer au Pro — 9€/mois
+            </button>
+          </div>
+        )}
+
         <h2 className="text-xl font-semibold text-gray-700 mb-6">
           Bonjour 👋 {profil?.prenom ? profil.prenom : user?.email}
         </h2>
