@@ -8,75 +8,84 @@ export default function CGV() {
           <div>
             <h2 className="text-xl font-semibold text-gray-800 mb-3">1. Objet</h2>
             <p className="text-gray-600">
-              Les présentes CGV régissent l'utilisation du service Zimvu, un outil de facturation en ligne 
-              destiné aux auto-entrepreneurs et petites entreprises, accessible sur zimvu-avlk.vercel.app.
+              Les présentes CGV régissent l'utilisation du service Zimvu, un outil de facturation en ligne
+              destiné aux auto-entrepreneurs et petites entreprises, accessible sur zimvu.app.
             </p>
           </div>
 
           <div>
             <h2 className="text-xl font-semibold text-gray-800 mb-3">2. Prix et abonnement</h2>
             <p className="text-gray-600">
-              Zimvu propose un abonnement mensuel au tarif de <strong>4,99€ TTC par mois</strong>. 
-              L'abonnement est sans engagement et peut être résilié à tout moment. 
+              Zimvu propose un abonnement mensuel au tarif de <strong>9€ TTC par mois</strong>.
+              L'abonnement est sans engagement et peut être résilié à tout moment.
               Le paiement est effectué via Stripe, plateforme sécurisée de paiement en ligne.
             </p>
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">3. Accès au service</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">3. Essai gratuit</h2>
             <p className="text-gray-600">
-              L'accès au service est disponible 24h/24 et 7j/7, sauf en cas de maintenance ou 
+              Tout nouvel utilisateur bénéficie d'un essai gratuit de <strong>14 jours</strong> avec accès
+              à toutes les fonctionnalités Pro. Aucune carte bancaire n'est requise pour l'essai.
+              À l'issue de la période d'essai, le compte passe automatiquement sur le plan Gratuit.
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">4. Accès au service</h2>
+            <p className="text-gray-600">
+              L'accès au service est disponible 24h/24 et 7j/7, sauf en cas de maintenance ou
               de force majeure. L'utilisateur est responsable de la confidentialité de ses identifiants.
             </p>
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">4. Droit de rétractation</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">5. Droit de rétractation</h2>
             <p className="text-gray-600">
-              Conformément à la loi, vous disposez d'un délai de <strong>14 jours</strong> à compter 
+              Conformément à la loi, vous disposez d'un délai de <strong>14 jours</strong> à compter
               de votre inscription pour exercer votre droit de rétractation et obtenir un remboursement complet.
             </p>
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">5. Résiliation</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">6. Résiliation</h2>
             <p className="text-gray-600">
-              L'abonnement peut être résilié à tout moment depuis votre espace profil. 
-              La résiliation prend effet à la fin de la période en cours. 
+              L'abonnement peut être résilié à tout moment depuis votre espace profil.
+              La résiliation prend effet à la fin de la période en cours.
               Aucun remboursement partiel ne sera effectué.
             </p>
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">6. Données personnelles</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">7. Données personnelles</h2>
             <p className="text-gray-600">
-              Les données collectées sont utilisées uniquement pour le fonctionnement du service. 
-              Elles ne sont jamais vendues à des tiers. Consultez notre politique de confidentialité 
+              Les données collectées sont utilisées uniquement pour le fonctionnement du service.
+              Elles ne sont jamais vendues à des tiers. Consultez notre politique de confidentialité
               pour plus d'informations.
             </p>
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">7. Responsabilité</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">8. Responsabilité</h2>
             <p className="text-gray-600">
-              Zimvu ne peut être tenu responsable des pertes de données ou interruptions de service 
-              dues à des causes extérieures. L'utilisateur est responsable de l'exactitude des 
+              Zimvu ne peut être tenu responsable des pertes de données ou interruptions de service
+              dues à des causes extérieures. L'utilisateur est responsable de l'exactitude des
               informations saisies dans l'application.
             </p>
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">8. Droit applicable</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">9. Droit applicable</h2>
             <p className="text-gray-600">
-              Les présentes CGV sont soumises au droit français. 
+              Les présentes CGV sont soumises au droit français.
               En cas de litige, les tribunaux français seront compétents.
             </p>
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">9. Contact</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">10. Contact</h2>
             <p className="text-gray-600">
-              Pour toute question : <strong>contact@zimvu.fr</strong>
+              Pour toute question : <strong>contact@zimvu.app</strong>
             </p>
           </div>
         </div>

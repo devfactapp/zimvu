@@ -9,11 +9,11 @@ export default function MentionsLegales() {
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Éditeur du site</h2>
             <p className="text-gray-600">Le site Zimvu est édité par :</p>
             <p className="text-gray-600 mt-2">
-              <strong>Nom :</strong> À compléter<br />
+              <strong>Nom :</strong> Neil Baaadache<br />
               <strong>Statut :</strong> Auto-entrepreneur<br />
               <strong>SIRET :</strong> À compléter après déclaration<br />
-              <strong>Email :</strong> contact@zimvu.fr<br />
-              <strong>Adresse :</strong> Marseille, France
+              <strong>Email :</strong> contact@zimvu.app<br />
+              <strong>Adresse :</strong> Rognes, Bouches-du-Rhône, France
             </p>
           </div>
 
@@ -29,7 +29,7 @@ export default function MentionsLegales() {
           <div>
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Propriété intellectuelle</h2>
             <p className="text-gray-600">
-              L'ensemble du contenu de ce site (textes, images, logos) est protégé par le droit d'auteur. 
+              L'ensemble du contenu de ce site (textes, images, logos) est protégé par le droit d'auteur.
               Toute reproduction sans autorisation est interdite.
             </p>
           </div>
@@ -37,7 +37,7 @@ export default function MentionsLegales() {
           <div>
             <h2 className="text-xl font-semibold text-gray-800 mb-3">Contact</h2>
             <p className="text-gray-600">
-              Pour toute question : <strong>contact@zimvu.fr</strong>
+              Pour toute question : <strong>contact@zimvu.app</strong>
             </p>
           </div>
         </div>
