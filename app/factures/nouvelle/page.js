@@ -59,7 +59,6 @@ const isTrial = planInfo.plan === 'trial'
 
 if (nb >= 3 && !isAdmin && !isTrial) {
   setLimitAtteinte(true)
-  router.push('/profil')
 }
     }
     fetchClients()
