@@ -11,17 +11,16 @@ export default function Profil() {
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [stats, setStats] = useState({ factures: 0, clients: 0, chiffreAffaires: 0 })
 
-  // Profil éditable
-  const [profil, setProfil] = useState({ prenom: '', nom: '', telephone: '' })
+  const [profil, setProfil] = useState({
+    prenom: '', nom: '', telephone: '', adresse: '', nom_entreprise: '', siret: ''
+  })
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
 
-  // Changer email
   const [nouvelEmail, setNouvelEmail] = useState('')
   const [emailLoading, setEmailLoading] = useState(false)
   const [emailMsg, setEmailMsg] = useState(null)
 
-  // Changer mot de passe
   const [mdpLoading, setMdpLoading] = useState(false)
   const [mdpMsg, setMdpMsg] = useState(null)
 
@@ -33,7 +32,7 @@ export default function Profil() {
 
       const { data: profilData } = await supabase
         .from('profils')
-        .select('prenom, nom, telephone')
+        .select('prenom, nom, telephone, adresse, nom_entreprise, siret')
         .eq('id', session.user.id)
         .single()
 
@@ -42,6 +41,9 @@ export default function Profil() {
           prenom: profilData.prenom || '',
           nom: profilData.nom || '',
           telephone: profilData.telephone || '',
+          adresse: profilData.adresse || '',
+          nom_entreprise: profilData.nom_entreprise || '',
+          siret: profilData.siret || '',
         })
       }
 
@@ -67,6 +69,9 @@ export default function Profil() {
         prenom: profil.prenom,
         nom: profil.nom,
         telephone: profil.telephone,
+        adresse: profil.adresse,
+        nom_entreprise: profil.nom_entreprise,
+        siret: profil.siret,
       }, { onConflict: 'id' })
     setSaving(false)
     if (!error) {
@@ -96,7 +101,7 @@ export default function Profil() {
     setMdpLoading(true)
     setMdpMsg(null)
     const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `https://zimvu.app/reset-password`,
     })
     setMdpLoading(false)
     if (error) {
@@ -128,6 +133,8 @@ export default function Profil() {
     </div>
   )
 
+  const inputClass = "w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar pageCourante="/profil" />
@@ -135,7 +142,7 @@ export default function Profil() {
       <div className="max-w-3xl mx-auto px-4 py-6">
         <h2 className="text-xl font-semibold text-gray-700 mb-6">Mon profil</h2>
 
-        {/* Infos compte */}
+        {/* Infos personnelles */}
         <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">Informations du compte</h3>
           <div className="flex items-center gap-4 mb-6">
@@ -148,43 +155,54 @@ export default function Profil() {
             </div>
           </div>
 
-          {/* Formulaire édition */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-gray-500 mb-1">Prénom</label>
-              <input
-                type="text"
-                value={profil.prenom}
+              <input type="text" value={profil.prenom}
                 onChange={e => setProfil({ ...profil, prenom: e.target.value })}
-                placeholder="Votre prénom"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-              />
+                placeholder="Votre prénom" className={inputClass} />
             </div>
             <div>
               <label className="block text-sm text-gray-500 mb-1">Nom</label>
-              <input
-                type="text"
-                value={profil.nom}
+              <input type="text" value={profil.nom}
                 onChange={e => setProfil({ ...profil, nom: e.target.value })}
-                placeholder="Votre nom"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-              />
+                placeholder="Votre nom" className={inputClass} />
             </div>
-            <div className="md:col-span-2">
+            <div>
               <label className="block text-sm text-gray-500 mb-1">Téléphone</label>
-              <input
-                type="tel"
-                value={profil.telephone}
+              <input type="tel" value={profil.telephone}
                 onChange={e => setProfil({ ...profil, telephone: e.target.value })}
-                placeholder="06 00 00 00 00"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-              />
+                placeholder="06 00 00 00 00" className={inputClass} />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-500 mb-1">Adresse</label>
+              <input type="text" value={profil.adresse}
+                onChange={e => setProfil({ ...profil, adresse: e.target.value })}
+                placeholder="7 rue de la Paix, 75001 Paris" className={inputClass} />
             </div>
           </div>
+
+          {/* Infos entreprise */}
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <p className="text-sm font-medium text-gray-600 mb-3">Informations entreprise</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">Nom de l'entreprise</label>
+                <input type="text" value={profil.nom_entreprise}
+                  onChange={e => setProfil({ ...profil, nom_entreprise: e.target.value })}
+                  placeholder="Mon Entreprise" className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 mb-1">Numéro SIRET</label>
+                <input type="text" value={profil.siret}
+                  onChange={e => setProfil({ ...profil, siret: e.target.value })}
+                  placeholder="000 000 000 00000" className={inputClass} />
+              </div>
+            </div>
+          </div>
+
           <div className="flex items-center gap-3 mt-4">
-            <button
-              onClick={sauvegarderProfil}
-              disabled={saving}
+            <button onClick={sauvegarderProfil} disabled={saving}
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold px-5 py-2 rounded-xl text-sm transition-colors">
               {saving ? 'Sauvegarde...' : 'Sauvegarder'}
             </button>
@@ -192,25 +210,19 @@ export default function Profil() {
           </div>
         </div>
 
-        {/* Sécurité du compte */}
+        {/* Sécurité */}
         <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-5">Sécurité du compte</h3>
 
-          {/* Changer email */}
           <div className="mb-6">
             <p className="text-sm font-medium text-gray-600 mb-2">Changer d'adresse email</p>
             <p className="text-xs text-gray-400 mb-3">Un email de confirmation sera envoyé à la nouvelle adresse avant toute modification.</p>
             <div className="flex gap-2">
-              <input
-                type="email"
-                value={nouvelEmail}
+              <input type="email" value={nouvelEmail}
                 onChange={e => setNouvelEmail(e.target.value)}
                 placeholder="Nouvelle adresse email"
-                className="flex-1 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-              />
-              <button
-                onClick={changerEmail}
-                disabled={emailLoading || !nouvelEmail}
+                className="flex-1 border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300" />
+              <button onClick={changerEmail} disabled={emailLoading || !nouvelEmail}
                 className="bg-gray-700 hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold px-4 py-2 rounded-xl text-sm transition-colors whitespace-nowrap">
                 {emailLoading ? '...' : 'Confirmer'}
               </button>
@@ -222,13 +234,10 @@ export default function Profil() {
             )}
           </div>
 
-          {/* Changer mot de passe */}
           <div className="border-t border-gray-100 pt-5">
             <p className="text-sm font-medium text-gray-600 mb-1">Changer de mot de passe</p>
             <p className="text-xs text-gray-400 mb-3">Un email avec un lien de réinitialisation sera envoyé à <span className="font-medium text-gray-500">{user?.email}</span>.</p>
-            <button
-              onClick={changerMotDePasse}
-              disabled={mdpLoading}
+            <button onClick={changerMotDePasse} disabled={mdpLoading}
               className="border border-gray-300 hover:bg-gray-50 disabled:opacity-50 text-gray-700 font-semibold px-5 py-2 rounded-xl text-sm transition-colors">
               {mdpLoading ? 'Envoi...' : '🔑 Envoyer le lien de réinitialisation'}
             </button>
@@ -287,9 +296,7 @@ export default function Profil() {
             </ul>
           </div>
 
-          <button
-            onClick={passerAuPro}
-            disabled={checkoutLoading}
+          <button onClick={passerAuPro} disabled={checkoutLoading}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
             {checkoutLoading ? 'Chargement...' : '🚀 Passer au Pro — 9€/mois · Sans engagement'}
           </button>
