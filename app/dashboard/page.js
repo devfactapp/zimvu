@@ -115,7 +115,7 @@ export default function Dashboard() {
         {plan.plan === 'trial' && (
           <div className="bg-blue-600 text-white rounded-2xl p-4 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
             <div>
-              <p className="font-semibold text-lg">Essai Pro en cours</p>
+              <p className="font-semibold text-lg">⭐ Essai Pro en cours</p>
               <p className="text-blue-100 text-sm">
                 Il vous reste <strong>{plan.joursRestants} jour{plan.joursRestants > 1 ? 's' : ''}</strong> d'essai Pro gratuit. Profitez de toutes les fonctionnalites !
               </p>
@@ -129,7 +129,7 @@ export default function Dashboard() {
         )}
 
         <h2 className="text-xl font-semibold text-gray-700 mb-6">
-          Bonjour {profil?.prenom ? profil.prenom : user?.email}
+          Bonjour 👋 {profil?.prenom ? profil.prenom : user?.email}
         </h2>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
