@@ -75,10 +75,10 @@ const { error: profilError } = await supabase.from('profils').upsert([{
         }
         try {
           await fetch('/api/welcome', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email }),
-          })
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email, prenom }),
+})
         } catch (e) {
           console.error('Email non envoyé:', e)
         }
