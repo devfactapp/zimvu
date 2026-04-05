@@ -1,7 +1,12 @@
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 export async function POST(request) {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return Response.json({ error: 'Stripe non configuré' }, { status: 503 })
+  }
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+
   try {
     const { email } = await request.json()
 
@@ -15,9 +20,9 @@ export async function POST(request) {
             currency: 'eur',
             product_data: {
               name: 'Zimvu Pro',
-              description: 'Accès complet à Zimvu — Factures illimitées, clients illimités, export PDF',
+              description: 'Factures illimitees, devis illimites, export PDF + Excel, agenda, relances automatiques',
             },
-            unit_amount: 499,
+            unit_amount: 900,
             recurring: {
               interval: 'month',
             },
@@ -25,12 +30,13 @@ export async function POST(request) {
           quantity: 1,
         },
       ],
-      success_url: 'https://zimvu.vercel.app/dashboard?success=true',
-      cancel_url: 'https://zimvu.vercel.app/profil',
+      success_url: 'https://zimvu.app/dashboard?success=true',
+      cancel_url: 'https://zimvu.app/profil',
     })
 
     return Response.json({ url: session.url })
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 })
+    console.error('Stripe error:', error)
+    return Response.json({ error: 'Erreur paiement' }, { status: 500 })
   }
 }
