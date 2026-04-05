@@ -173,11 +173,13 @@ export default function Profil() {
               Après l'essai, votre compte basculera automatiquement sur le plan Gratuit.
             </p>
           </div>
+          <div className="mt-2 flex justify-center">
           <button onClick={passerAuPro} disabled={checkoutLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
-            {checkoutLoading ? 'Chargement...' : '🚀 Passer au Pro — 9€/mois · Sans engagement'}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold px-8 py-3 rounded-xl text-sm transition-colors">
+            {checkoutLoading ? 'Chargement...' : '🚀 Passer au Pro — 9€/mois'}
           </button>
-          <p className="text-center text-xs text-gray-400 mt-2">Sans engagement · Annulable à tout moment</p>
+        </div>
+        <p className="text-center text-xs text-gray-400 mt-2">Sans engagement · Annulable à tout moment</p>
         </>
       )
     }
