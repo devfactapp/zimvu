@@ -74,7 +74,7 @@ const { error: profilError } = await supabase.from('profils').upsert([{
           if (profilError) console.error('Erreur profil:', profilError)
         }
         try {
-          await fetch('/api/welcome', {
+          await fetch('/api/checkout/welcome', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ email, prenom }),
