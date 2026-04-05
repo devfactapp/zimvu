@@ -25,11 +25,20 @@ export const metadata = {
     siteName: "Zimvu",
     locale: "fr_FR",
     type: "website",
+    images: [
+      {
+        url: "https://zimvu.app/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Zimvu — Facturation simple pour auto-entrepreneurs",
+      }
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Zimvu — Facturation simple pour auto-entrepreneurs",
     description: "Créez des factures professionnelles en quelques secondes. 9€/mois, sans engagement.",
+    images: ["https://zimvu.app/og-image.png"],
   },
   robots: {
     index: true,
