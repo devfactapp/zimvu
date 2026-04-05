@@ -5,7 +5,7 @@ import { supabase } from '../supabase'
 import Navbar from '../components/Navbar'
 import { getUserPlan } from '../utils/planUtils'
 
-const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
+const MOIS = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec']
 
 export default function Dashboard() {
   const router = useRouter()
@@ -35,7 +35,28 @@ export default function Dashboard() {
         .single()
       setProfil(profilData)
 
-      // Vérifier le plan
+      // Détecter nouvel utilisateur Google OAuth
+      const isGoogle = session.user.app_metadata?.provider === 'google'
+      const createdAt = new Date(session.user.created_at)
+      const maintenant = new Date()
+      const diffMinutes = (maintenant - createdAt) / 1000 / 60
+      const isNouvelUtilisateur = diffMinutes < 5
+
+      if (isGoogle && isNouvelUtilisateur) {
+        try {
+          await fetch('/api/checkout/welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: session.user.email,
+              prenom: session.user.user_metadata?.full_name?.split(' ')[0] || '',
+            }),
+          })
+        } catch (e) {
+          console.error('Email bienvenue Google non envoye:', e)
+        }
+      }
+
       const planInfo = await getUserPlan(supabase, session.user.id)
       setPlan(planInfo)
 
@@ -49,7 +70,7 @@ export default function Dashboard() {
         .select('*')
 
       if (factures) {
-        const facturesValides = factures.filter(f => f.statut !== 'Annulée')
+        const facturesValides = factures.filter(f => f.statut !== 'Annulee')
         const total = facturesValides.reduce((sum, f) => sum + Number(f.montant), 0)
         const enAttente = factures.filter(f => f.statut === 'En attente').length
 
@@ -91,35 +112,33 @@ export default function Dashboard() {
 
       <div className="max-w-6xl mx-auto px-4 py-6">
 
-        {/* Bandeau trial */}
         {plan.plan === 'trial' && (
           <div className="bg-blue-600 text-white rounded-2xl p-4 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
             <div>
-              <p className="font-semibold text-lg">⭐ Essai Pro en cours</p>
+              <p className="font-semibold text-lg">Essai Pro en cours</p>
               <p className="text-blue-100 text-sm">
-                Il vous reste <strong>{plan.joursRestants} jour{plan.joursRestants > 1 ? 's' : ''}</strong> d'essai Pro gratuit. Profitez de toutes les fonctionnalités !
+                Il vous reste <strong>{plan.joursRestants} jour{plan.joursRestants > 1 ? 's' : ''}</strong> d'essai Pro gratuit. Profitez de toutes les fonctionnalites !
               </p>
             </div>
             <button
               onClick={() => router.push('/profil')}
               className="bg-white text-blue-600 font-semibold px-5 py-2 rounded-xl text-sm whitespace-nowrap hover:bg-blue-50 transition-colors">
-              Passer au Pro — 9€/mois
+              Passer au Pro — 9 euros/mois
             </button>
           </div>
         )}
 
         <h2 className="text-xl font-semibold text-gray-700 mb-6">
-          Bonjour 👋 {profil?.prenom ? profil.prenom : user?.email}
+          Bonjour {profil?.prenom ? profil.prenom : user?.email}
         </h2>
 
-        {/* STATS */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-2xl shadow p-4">
             <p className="text-gray-500 text-sm">Chiffre d'affaires</p>
-            <p className="text-2xl font-bold text-blue-700 mt-2">{stats.chiffreAffaires.toFixed(0)} €</p>
+            <p className="text-2xl font-bold text-blue-700 mt-2">{stats.chiffreAffaires.toFixed(0)} euros</p>
           </div>
           <div className="bg-white rounded-2xl shadow p-4">
-            <p className="text-gray-500 text-sm">Factures envoyées</p>
+            <p className="text-gray-500 text-sm">Factures envoyees</p>
             <p className="text-2xl font-bold text-blue-700 mt-2">{stats.facturesEnvoyees}</p>
           </div>
           <div className="bg-white rounded-2xl shadow p-4">
@@ -132,7 +151,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* GRAPHIQUE CA */}
         <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-6">
             Chiffre d'affaires {new Date().getFullYear()}
@@ -141,7 +159,7 @@ export default function Dashboard() {
             {dataGraphique.map((ca, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
                 <span className="text-xs text-gray-400">
-                  {ca > 0 ? `${ca.toFixed(0)}€` : ''}
+                  {ca > 0 ? `${ca.toFixed(0)}` : ''}
                 </span>
                 <div
                   className="w-full rounded-t-lg transition-all duration-500"
@@ -156,15 +174,14 @@ export default function Dashboard() {
           </div>
           {dataGraphique.every(v => v === 0) && (
             <p className="text-center text-gray-400 text-sm mt-4">
-              Aucune donnée pour le moment
+              Aucune donnee pour le moment
             </p>
           )}
         </div>
 
-        {/* DERNIÈRES FACTURES */}
         <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-700">Dernières factures</h3>
+            <h3 className="text-lg font-semibold text-gray-700">Dernieres factures</h3>
             <span onClick={() => router.push('/factures')} className="text-blue-600 cursor-pointer text-sm hover:underline">Voir tout</span>
           </div>
           {dernieresFactures.length === 0 ? (
@@ -185,10 +202,10 @@ export default function Dashboard() {
                     <tr key={facture.id} className="border-b border-gray-50">
                       <td className="py-3 text-blue-600 text-sm font-medium">{facture.numero || '—'}</td>
                       <td className="py-3 text-gray-800">{facture.client}</td>
-                      <td className="py-3 font-semibold text-blue-700">{facture.montant} €</td>
+                      <td className="py-3 font-semibold text-blue-700">{facture.montant} euros</td>
                       <td className="py-3">
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          facture.statut === "Payée" ? "bg-green-100 text-green-700" :
+                          facture.statut === "Payee" ? "bg-green-100 text-green-700" :
                           facture.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
                           "bg-red-100 text-red-700"
                         }`}>
