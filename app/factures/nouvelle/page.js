@@ -37,29 +37,27 @@ export default function NouvelleFacture() {
       const { data: clientsData } = await supabase.from('clients').select('*').order('nom')
       setClients(clientsData || [])
 
-      // Vérifier le plan
       const planInfo = await getUserPlan(supabase, session.user.id)
       setPlan(planInfo)
 
-      // Vérifier la limite seulement si pas en trial et pas admin
       const maintenant = new Date()
-const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1).toISOString()
+      const debutMois = new Date(maintenant.getFullYear(), maintenant.getMonth(), 1).toISOString()
 
-const { data: factures } = await supabase
-  .from('factures')
-  .select('id, created_at')
-  .eq('user_id', session.user.id)
-  .gte('created_at', debutMois)
+      const { data: factures } = await supabase
+        .from('factures')
+        .select('id, created_at')
+        .eq('user_id', session.user.id)
+        .gte('created_at', debutMois)
 
-const nb = factures?.length || 0
-setNbFactures(nb)
+      const nb = factures?.length || 0
+      setNbFactures(nb)
 
-const isAdmin = session.user.email === 'devfact.app@gmail.com'
-const isTrial = planInfo.plan === 'trial'
+      const isAdmin = session.user.email === 'devfact.app@gmail.com'
+      const isTrial = planInfo.plan === 'trial'
 
-if (nb >= 3 && !isAdmin && !isTrial) {
-  setLimitAtteinte(true)
-}
+      if (nb >= 3 && !isAdmin && !isTrial) {
+        setLimitAtteinte(true)
+      }
     }
     fetchClients()
   }, [])
@@ -80,11 +78,10 @@ if (nb >= 3 && !isAdmin && !isTrial) {
   const montantTTC = montantHT + montantTVA
 
   const creerFacture = async () => {
-  if (limitAtteinte) {
-    alert('🔒 Vous avez atteint votre limite de 3 factures ce mois-ci. Passez au Pro pour continuer !')
-    router.push('/profil')
-    return
-  }
+    if (limitAtteinte) {
+      router.push('/profil')
+      return
+    }
     if (!facture.client || !facture.montant_ht || !facture.date) {
       setError('Veuillez remplir les champs obligatoires')
       return
@@ -95,21 +92,36 @@ if (nb >= 3 && !isAdmin && !isTrial) {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/'); return }
 
-    const { error } = await supabase.from('factures').insert([{
-      client: facture.client,
-      email: facture.email,
-      description: facture.description,
-      montant_ht: montantHT,
-      tva_taux: tauxTVA,
-      montant_tva: montantTVA,
-      montant: montantTTC,
-      date: facture.date,
-      statut: 'En attente',
-      user_id: session.user.id,
-    }])
+    const response = await fetch('/api/factures', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: session.user.id,
+        userEmail: session.user.email,
+        factureData: {
+          client: facture.client,
+          email: facture.email,
+          description: facture.description,
+          montant_ht: montantHT,
+          tva_taux: tauxTVA,
+          montant_tva: montantTVA,
+          montant: montantTTC,
+          date: facture.date,
+          statut: 'En attente',
+        }
+      }),
+    })
 
-    if (error) setError('Erreur lors de la création')
-    else router.push('/factures')
+    const data = await response.json()
+
+    if (data.error === 'LIMITE_ATTEINTE') {
+      setLimitAtteinte(true)
+      setError('Limite de 3 factures atteinte ce mois-ci.')
+    } else if (data.error) {
+      setError('Erreur lors de la creation')
+    } else {
+      router.push('/factures')
+    }
 
     setLoading(false)
   }
@@ -124,7 +136,6 @@ if (nb >= 3 && !isAdmin && !isTrial) {
           <button onClick={() => router.push('/factures')} className="text-gray-500 hover:text-gray-700 text-sm">← Retour</button>
         </div>
 
-        {/* Bannière trial */}
         {plan.plan === 'trial' && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
             <p className="text-blue-700 text-sm">
@@ -137,7 +148,6 @@ if (nb >= 3 && !isAdmin && !isTrial) {
           </div>
         )}
 
-        {/* Bannière limite atteinte */}
         {limitAtteinte && (
           <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 mb-6 text-center">
             <div className="text-3xl mb-3">🔒</div>
@@ -145,15 +155,13 @@ if (nb >= 3 && !isAdmin && !isTrial) {
             <p className="text-orange-600 text-sm mb-4">
               Vous avez utilisé vos <strong>3 factures gratuites</strong>. Passez au plan Pro pour créer des factures illimitées.
             </p>
-            <button
-              onClick={() => router.push('/profil')}
+            <button onClick={() => router.push('/profil')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold text-sm">
               🚀 Passer au Pro — 9€/mois
             </button>
           </div>
         )}
 
-        {/* Compteur plan gratuit */}
         {!limitAtteinte && plan.plan === 'gratuit' && (
           <div className="bg-blue-50 rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
             <p className="text-blue-700 text-sm">
@@ -168,7 +176,6 @@ if (nb >= 3 && !isAdmin && !isTrial) {
 
         <div className={`bg-white rounded-2xl shadow p-8 space-y-6 ${limitAtteinte ? 'opacity-50 pointer-events-none' : ''}`}>
 
-          {/* Informations client */}
           <div>
             <h3 className="text-lg font-semibold text-gray-700 mb-4">Informations client</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -194,7 +201,6 @@ if (nb >= 3 && !isAdmin && !isTrial) {
             </div>
           </div>
 
-          {/* Détails prestation */}
           <div>
             <h3 className="text-lg font-semibold text-gray-700 mb-4">Détails de la prestation</h3>
             <div className="space-y-4">
@@ -229,7 +235,6 @@ if (nb >= 3 && !isAdmin && !isTrial) {
             </div>
           </div>
 
-          {/* Récapitulatif */}
           {montantHT > 0 && (
             <div className="bg-gray-50 rounded-xl p-4 space-y-2">
               <h3 className="text-sm font-semibold text-gray-600 mb-3">Récapitulatif</h3>
