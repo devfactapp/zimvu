@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '../supabase'
 import Navbar from '../components/Navbar'
+import { getUserPlan } from '../utils/planUtils'
 
 export default function Profil() {
   const router = useRouter()
@@ -10,6 +11,7 @@ export default function Profil() {
   const [loading, setLoading] = useState(true)
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [stats, setStats] = useState({ factures: 0, clients: 0, chiffreAffaires: 0 })
+  const [planInfo, setPlanInfo] = useState({ plan: 'gratuit', joursRestants: 0 })
 
   const [profil, setProfil] = useState({
     prenom: '', nom: '', telephone: '', adresse: '', nom_entreprise: '', siret: ''
@@ -46,6 +48,9 @@ export default function Profil() {
           siret: profilData.siret || '',
         })
       }
+
+      const plan = await getUserPlan(supabase, session.user.id)
+      setPlanInfo(plan)
 
       const { data: factures } = await supabase.from('factures').select('*')
       const { data: clients } = await supabase.from('clients').select('*')
@@ -135,6 +140,71 @@ export default function Profil() {
 
   const inputClass = "w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
 
+  const renderAbonnement = () => {
+    if (planInfo.plan === 'pro') {
+      return (
+        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">⭐ PRO</span>
+            <span className="text-blue-700 font-semibold">Plan Pro actif</span>
+          </div>
+          <ul className="space-y-1 text-sm text-gray-600">
+            <li>✓ Factures & devis illimités</li>
+            <li>✓ Notes de frais</li>
+            <li>✓ Export PDF + Excel</li>
+            <li>✓ Agenda + Relances automatiques</li>
+            <li>✓ Support prioritaire</li>
+          </ul>
+          <p className="text-xs text-blue-500 mt-3 font-medium">Abonnement actif — 9€/mois</p>
+        </div>
+      )
+    }
+
+    if (planInfo.plan === 'trial') {
+      return (
+        <>
+          <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200 mb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded-full">⭐ ESSAI PRO</span>
+              <span className="text-yellow-700 font-semibold">Essai Pro en cours</span>
+            </div>
+            <p className="text-sm text-yellow-700">
+              Il vous reste <span className="font-bold">{planInfo.joursRestants} jour{planInfo.joursRestants > 1 ? 's' : ''}</span> d'essai gratuit.
+              Après l'essai, votre compte basculera automatiquement sur le plan Gratuit.
+            </p>
+          </div>
+          <button onClick={passerAuPro} disabled={checkoutLoading}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
+            {checkoutLoading ? 'Chargement...' : '🚀 Passer au Pro — 9€/mois · Sans engagement'}
+          </button>
+          <p className="text-center text-xs text-gray-400 mt-2">Sans engagement · Annulable à tout moment</p>
+        </>
+      )
+    }
+
+    return (
+      <>
+        <div className="bg-gray-50 rounded-xl p-4 mb-4">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="bg-gray-200 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">GRATUIT</span>
+            <span className="text-gray-700 font-semibold">Plan Gratuit</span>
+          </div>
+          <ul className="space-y-1 text-sm text-gray-500">
+            <li>✓ 3 factures / mois</li>
+            <li>✓ 3 devis / mois</li>
+            <li>✓ Gestion clients</li>
+            <li>✗ Notes de frais, Export, Agenda, Relances</li>
+          </ul>
+        </div>
+        <button onClick={passerAuPro} disabled={checkoutLoading}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
+          {checkoutLoading ? 'Chargement...' : '🚀 Passer au Pro — 9€/mois · Sans engagement'}
+        </button>
+        <p className="text-center text-xs text-gray-400 mt-2">Sans engagement · Annulable à tout moment</p>
+      </>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar pageCourante="/profil" />
@@ -150,7 +220,15 @@ export default function Profil() {
               {profil.prenom ? profil.prenom.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
             </div>
             <div>
-              <p className="font-semibold text-gray-800 break-all">{user?.email}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-gray-800 break-all">{user?.email}</p>
+                {planInfo.plan === 'pro' && (
+                  <span className="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">⭐ PRO</span>
+                )}
+                {planInfo.plan === 'trial' && (
+                  <span className="bg-yellow-400 text-white text-xs font-bold px-2 py-0.5 rounded-full">ESSAI PRO</span>
+                )}
+              </div>
               <p className="text-gray-400 text-sm">Membre depuis {new Date(user?.created_at).toLocaleDateString('fr-FR')}</p>
             </div>
           </div>
@@ -182,7 +260,6 @@ export default function Profil() {
             </div>
           </div>
 
-          {/* Infos entreprise */}
           <div className="mt-4 pt-4 border-t border-gray-100">
             <p className="text-sm font-medium text-gray-600 mb-3">Informations entreprise</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -268,39 +345,7 @@ export default function Profil() {
         {/* Abonnement */}
         <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">Mon abonnement</h3>
-
-          <div className="bg-gray-50 rounded-xl p-4 mb-4">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="bg-gray-200 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">GRATUIT</span>
-              <span className="text-gray-700 font-semibold">Plan Gratuit</span>
-            </div>
-            <ul className="space-y-1 text-sm text-gray-500">
-              <li>✓ 3 factures / mois</li>
-              <li>✓ 3 devis / mois</li>
-              <li>✓ Gestion clients</li>
-              <li>✗ Notes de frais, Export, Agenda, Relances</li>
-            </ul>
-          </div>
-
-          <div className="bg-blue-50 rounded-xl p-4 mb-4 border border-blue-200">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">⭐ PRO</span>
-              <span className="text-blue-700 font-semibold">Plan Pro — 9€/mois</span>
-            </div>
-            <ul className="space-y-1 text-sm text-gray-600">
-              <li>✓ Factures & devis illimités</li>
-              <li>✓ Notes de frais</li>
-              <li>✓ Export PDF + Excel</li>
-              <li>✓ Agenda + Relances automatiques</li>
-              <li>✓ Support prioritaire</li>
-            </ul>
-          </div>
-
-          <button onClick={passerAuPro} disabled={checkoutLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
-            {checkoutLoading ? 'Chargement...' : '🚀 Passer au Pro — 9€/mois · Sans engagement'}
-          </button>
-          <p className="text-center text-xs text-gray-400 mt-2">Sans engagement · Annulable à tout moment</p>
+          {renderAbonnement()}
         </div>
 
         {/* Zone danger */}
