@@ -8,7 +8,7 @@ export async function getUserPlan(supabase, userId) {
   const now = new Date()
 
   if (profil?.pro_trial_end && new Date(profil.pro_trial_end) > now) {
-    const joursRestants = Math.ceil((new Date(profil.pro_trial_end) - now) / (1000 * 60 * 60 * 24))
+    const joursRestants = Math.floor((new Date(profil.pro_trial_end) - now) / (1000 * 60 * 60 * 24))
     return { plan: 'trial', joursRestants }
   }
 
