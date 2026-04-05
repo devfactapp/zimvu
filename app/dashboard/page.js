@@ -205,7 +205,7 @@ export default function Dashboard() {
                       <td className="py-3 font-semibold text-blue-700">{facture.montant} euros</td>
                       <td className="py-3">
                         <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          facture.statut === "Payee" ? "bg-green-100 text-green-700" :
+                          facture.statut === "Payée" ? "bg-green-100 text-green-700" :
                           facture.statut === "En attente" ? "bg-yellow-100 text-yellow-700" :
                           "bg-red-100 text-red-700"
                         }`}>
