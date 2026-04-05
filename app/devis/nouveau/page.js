@@ -76,7 +76,6 @@ export default function NouveauDevis() {
 
   const handleSubmit = async () => {
     if (limitAtteinte) {
-      alert('🔒 Vous avez atteint votre limite de 3 devis ce mois-ci. Passez au Pro pour continuer !')
       router.push('/profil')
       return
     }
@@ -85,24 +84,39 @@ export default function NouveauDevis() {
       return
     }
     setSaving(true)
+
     const { data: { session } } = await supabase.auth.getSession()
 
-    await supabase.from('devis').insert([{
-      user_id: session.user.id,
-      client: form.client,
-      email: form.email,
-      description: form.description,
-      montant_ht: montantHT,
-      tva_taux: tauxTVA,
-      montant_tva: montantTVA,
-      montant: montantTTC,
-      date: form.date,
-      date_validite: form.date_validite || null,
-      statut: form.statut,
-    }])
+    const response = await fetch('/api/devis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: session.user.id,
+        userEmail: session.user.email,
+        devisData: {
+          client: form.client,
+          email: form.email,
+          description: form.description,
+          montant_ht: montantHT,
+          tva_taux: tauxTVA,
+          montant_tva: montantTVA,
+          montant: montantTTC,
+          date: form.date,
+          date_validite: form.date_validite || null,
+          statut: form.statut,
+        }
+      }),
+    })
+
+    const data = await response.json()
+
+    if (data.error === 'LIMITE_ATTEINTE') {
+      setLimitAtteinte(true)
+    } else if (!data.error) {
+      router.push('/devis')
+    }
 
     setSaving(false)
-    router.push('/devis')
   }
 
   return (
@@ -112,40 +126,37 @@ export default function NouveauDevis() {
       <div className="max-w-2xl mx-auto px-4 py-6">
         <button onClick={() => router.push('/devis')}
           className="text-sm text-gray-500 hover:text-blue-600 mb-6 flex items-center gap-1">
-          ← Retour aux devis
+          Retour aux devis
         </button>
 
         <h2 className="text-xl font-semibold text-gray-700 mb-6">Nouveau devis</h2>
 
-        {/* Bandeau trial */}
         {plan.plan === 'trial' && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
             <p className="text-blue-700 text-sm">
-              ⭐ Essai Pro — <strong>Devis illimités</strong> · {plan.joursRestants} jour{plan.joursRestants > 1 ? 's' : ''} restant{plan.joursRestants > 1 ? 's' : ''}
+              Essai Pro — <strong>Devis illimites</strong> · {plan.joursRestants} jour{plan.joursRestants > 1 ? 's' : ''} restant{plan.joursRestants > 1 ? 's' : ''}
             </p>
             <span onClick={() => router.push('/profil')}
               className="text-blue-600 text-xs cursor-pointer hover:underline font-medium">
-              Passer au Pro →
+              Passer au Pro
             </span>
           </div>
         )}
 
-        {/* Bannière limite atteinte */}
         {limitAtteinte && (
           <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 mb-6 text-center">
             <div className="text-3xl mb-3">🔒</div>
             <h3 className="text-lg font-semibold text-orange-700 mb-2">Limite du plan gratuit atteinte</h3>
             <p className="text-orange-600 text-sm mb-4">
-              Vous avez utilisé vos <strong>3 devis ce mois-ci</strong>. Passez au plan Pro pour créer des devis illimités.
+              Vous avez utilise vos <strong>3 devis ce mois-ci</strong>. Passez au plan Pro pour creer des devis illimites.
             </p>
             <button onClick={() => router.push('/profil')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold text-sm">
-              🚀 Passer au Pro — 9€/mois
+              Passer au Pro — 9 euros/mois
             </button>
           </div>
         )}
 
-        {/* Compteur plan gratuit */}
         {!limitAtteinte && plan.plan === 'gratuit' && (
           <div className="bg-blue-50 rounded-xl px-4 py-3 mb-6 flex items-center justify-between">
             <p className="text-blue-700 text-sm">
@@ -153,7 +164,7 @@ export default function NouveauDevis() {
             </p>
             <span onClick={() => router.push('/profil')}
               className="text-blue-600 text-xs cursor-pointer hover:underline font-medium">
-              Passer au Pro →
+              Passer au Pro
             </span>
           </div>
         )}
@@ -178,7 +189,7 @@ export default function NouveauDevis() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea placeholder="Décrivez la prestation..."
+            <textarea placeholder="Decrivez la prestation..."
               value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
               rows={3}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
@@ -186,7 +197,7 @@ export default function NouveauDevis() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Montant HT (€) *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Montant HT (euros) *</label>
               <input type="number" placeholder="0.00" step="0.01"
                 value={form.montant_ht}
                 onChange={(e) => setForm({ ...form, montant_ht: e.target.value })}
@@ -206,18 +217,18 @@ export default function NouveauDevis() {
 
           {montantHT > 0 && (
             <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-              <h3 className="text-sm font-semibold text-gray-600 mb-3">Récapitulatif</h3>
+              <h3 className="text-sm font-semibold text-gray-600 mb-3">Recapitulatif</h3>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Montant HT</span>
-                <span className="font-medium text-gray-800">{montantHT.toFixed(2)} €</span>
+                <span className="font-medium text-gray-800">{montantHT.toFixed(2)} euros</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">TVA ({tauxTVA}%)</span>
-                <span className="font-medium text-gray-800">{montantTVA.toFixed(2)} €</span>
+                <span className="font-medium text-gray-800">{montantTVA.toFixed(2)} euros</span>
               </div>
               <div className="flex justify-between text-sm font-semibold border-t border-gray-200 pt-2">
                 <span className="text-gray-700">Total TTC</span>
-                <span className="text-blue-700 text-lg">{montantTTC.toFixed(2)} €</span>
+                <span className="text-blue-700 text-lg">{montantTTC.toFixed(2)} euros</span>
               </div>
               {tauxTVA === 0 && (
                 <p className="text-xs text-gray-400 italic">
@@ -235,7 +246,7 @@ export default function NouveauDevis() {
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Date de validité</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date de validite</label>
               <input type="date" value={form.date_validite}
                 onChange={(e) => setForm({ ...form, date_validite: e.target.value })}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -248,9 +259,9 @@ export default function NouveauDevis() {
               onChange={(e) => setForm({ ...form, statut: e.target.value })}
               className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
               <option value="Brouillon">Brouillon</option>
-              <option value="Envoyé">Envoyé</option>
-              <option value="Accepté">Accepté</option>
-              <option value="Refusé">Refusé</option>
+              <option value="Envoyé">Envoye</option>
+              <option value="Accepté">Accepte</option>
+              <option value="Refusé">Refuse</option>
             </select>
           </div>
 
