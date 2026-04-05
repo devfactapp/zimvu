@@ -198,10 +198,12 @@ export default function Profil() {
             <li>✗ Notes de frais, Export, Agenda, Relances</li>
           </ul>
         </div>
-        <button onClick={passerAuPro} disabled={checkoutLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
-          {checkoutLoading ? 'Chargement...' : '🚀 Passer au Pro — 9€/mois · Sans engagement'}
-        </button>
+        <div className="mt-2 flex justify-center">
+          <button onClick={passerAuPro} disabled={checkoutLoading}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold px-8 py-3 rounded-xl text-sm transition-colors">
+            {checkoutLoading ? 'Chargement...' : '🚀 Passer au Pro — 9€/mois'}
+          </button>
+        </div>
         <p className="text-center text-xs text-gray-400 mt-2">Sans engagement · Annulable à tout moment</p>
       </>
     )
