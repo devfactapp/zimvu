@@ -186,17 +186,37 @@ export default function Profil() {
 
     return (
       <>
-        <div className="bg-gray-50 rounded-xl p-4 mb-4">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="bg-gray-200 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">GRATUIT</span>
-            <span className="text-gray-700 font-semibold">Plan Gratuit</span>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="bg-gray-200 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">GRATUIT</span>
+              <span className="text-gray-700 font-semibold text-sm">Actuel</span>
+            </div>
+            <ul className="space-y-1.5 text-xs text-gray-500">
+              <li>✓ 3 factures / mois</li>
+              <li>✓ 3 devis / mois</li>
+              <li>✓ Gestion clients</li>
+              <li className="text-gray-300">✗ Notes de frais</li>
+              <li className="text-gray-300">✗ Export PDF + Excel</li>
+              <li className="text-gray-300">✗ Agenda</li>
+              <li className="text-gray-300">✗ Relances auto</li>
+            </ul>
           </div>
-          <ul className="space-y-1 text-sm text-gray-500">
-            <li>✓ 3 factures / mois</li>
-            <li>✓ 3 devis / mois</li>
-            <li>✓ Gestion clients</li>
-            <li>✗ Notes de frais, Export, Agenda, Relances</li>
-          </ul>
+          <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">⭐ PRO</span>
+              <span className="text-blue-700 font-semibold text-sm">9€/mois</span>
+            </div>
+            <ul className="space-y-1.5 text-xs text-blue-700">
+              <li>✓ Factures illimitées</li>
+              <li>✓ Devis illimités</li>
+              <li>✓ Gestion clients</li>
+              <li>✓ Notes de frais</li>
+              <li>✓ Export PDF + Excel</li>
+              <li>✓ Agenda</li>
+              <li>✓ Relances auto</li>
+            </ul>
+          </div>
         </div>
         <div className="mt-2 flex justify-center">
           <button onClick={passerAuPro} disabled={checkoutLoading}
