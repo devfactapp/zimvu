@@ -14,14 +14,14 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Zimvu — Logiciel de facturation pour auto-entrepreneurs",
-  description: "Zimvu est le logiciel de facturation simple et pas cher pour les auto-entrepreneurs français. Créez des factures professionnelles, gérez vos clients et suivez votre chiffre d'affaires. 9€/mois.",
-  keywords: "facturation auto-entrepreneur, logiciel facturation, facture PDF, auto-entrepreneur France, facturation électronique",
+  description: "Zimvu est le logiciel de facturation simple pour les auto-entrepreneurs français. Créez des factures professionnelles, gérez vos clients et suivez votre chiffre d'affaires. À partir de 5.99€/mois.",
+  keywords: "facturation auto-entrepreneur, logiciel facturation, facture PDF, auto-entrepreneur France, facturation électronique, devis en ligne, gestion clients",
   authors: [{ name: "Zimvu" }],
   creator: "Zimvu",
   metadataBase: new URL("https://zimvu.app"),
   openGraph: {
     title: "Zimvu — Facturation simple pour auto-entrepreneurs",
-    description: "Créez des factures professionnelles en quelques secondes. 9€/mois, sans engagement.",
+    description: "Créez des factures professionnelles en quelques secondes. À partir de 5.99€/mois, sans engagement.",
     url: "https://zimvu.app",
     siteName: "Zimvu",
     locale: "fr_FR",
@@ -38,7 +38,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Zimvu — Facturation simple pour auto-entrepreneurs",
-    description: "Créez des factures professionnelles en quelques secondes. 9€/mois, sans engagement.",
+    description: "Créez des factures professionnelles en quelques secondes. À partir de 5.99€/mois, sans engagement.",
     images: ["https://zimvu.app/og-image.png"],
   },
   robots: {
