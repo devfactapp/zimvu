@@ -8,7 +8,9 @@ export async function POST(request) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
   try {
-    const { email } = await request.json()
+    const { email, plan } = await request.json()
+
+    const isAnnuel = plan === 'annuel'
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
@@ -19,12 +21,12 @@ export async function POST(request) {
           price_data: {
             currency: 'eur',
             product_data: {
-              name: 'Zimvu Pro',
+              name: isAnnuel ? 'Zimvu Pro Annuel' : 'Zimvu Pro Mensuel',
               description: 'Factures illimitees, devis illimites, export PDF + Excel, agenda, relances automatiques',
             },
-            unit_amount: 900,
+            unit_amount: isAnnuel ? 7188 : 899,
             recurring: {
-              interval: 'month',
+              interval: isAnnuel ? 'year' : 'month',
             },
           },
           quantity: 1,
