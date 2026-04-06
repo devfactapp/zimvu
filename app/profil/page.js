@@ -116,13 +116,13 @@ export default function Profil() {
     }
   }
 
-  const passerAuPro = async () => {
+  const passerAuPro = async (plan = 'mensuel') => {
     setCheckoutLoading(true)
     try {
       const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email }),
+        body: JSON.stringify({ email: user.email, plan }),
       })
       const data = await response.json()
       if (data.url) window.location.href = data.url
@@ -140,6 +140,23 @@ export default function Profil() {
 
   const inputClass = "w-full border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
 
+  const BoutonsPro = () => (
+    <div className="mt-4 space-y-3">
+      <button onClick={() => passerAuPro('annuel')} disabled={checkoutLoading}
+        className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 rounded-xl text-sm transition-colors relative">
+        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-green-400 text-white text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+          💰 ECONOMISEZ 33%
+        </span>
+        {checkoutLoading ? 'Chargement...' : '🚀 Pro Annuel — 5.99€/mois · 71.88€/an'}
+      </button>
+      <button onClick={() => passerAuPro('mensuel')} disabled={checkoutLoading}
+        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
+        {checkoutLoading ? 'Chargement...' : '🚀 Pro Mensuel — 8.99€/mois · Sans engagement'}
+      </button>
+      <p className="text-center text-xs text-gray-400">Essai 14 jours inclus · Annulable à tout moment</p>
+    </div>
+  )
+
   const renderAbonnement = () => {
     if (planInfo.plan === 'pro') {
       return (
@@ -155,7 +172,7 @@ export default function Profil() {
             <li>✓ Agenda + Relances automatiques</li>
             <li>✓ Support prioritaire</li>
           </ul>
-          <p className="text-xs text-blue-500 mt-3 font-medium">Abonnement actif — 9€/mois</p>
+          <p className="text-xs text-blue-500 mt-3 font-medium">Abonnement actif</p>
         </div>
       )
     }
@@ -163,7 +180,7 @@ export default function Profil() {
     if (planInfo.plan === 'trial') {
       return (
         <>
-          <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200 mb-4">
+          <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200 mb-2">
             <div className="flex items-center gap-3 mb-2">
               <span className="bg-yellow-400 text-white text-xs font-bold px-2 py-1 rounded-full">⭐ ESSAI PRO</span>
               <span className="text-yellow-700 font-semibold">Essai Pro en cours</span>
@@ -173,20 +190,14 @@ export default function Profil() {
               Après l'essai, votre compte basculera automatiquement sur le plan Gratuit.
             </p>
           </div>
-          <div className="mt-2 flex justify-center">
-          <button onClick={passerAuPro} disabled={checkoutLoading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold px-8 py-3 rounded-xl text-sm transition-colors">
-            {checkoutLoading ? 'Chargement...' : '🚀 Passer au Pro — 9€/mois'}
-          </button>
-        </div>
-        <p className="text-center text-xs text-gray-400 mt-2">Sans engagement · Annulable à tout moment</p>
+          <BoutonsPro />
         </>
       )
     }
 
     return (
       <>
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-2 gap-3 mb-2">
           <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
             <div className="flex items-center gap-2 mb-3">
               <span className="bg-gray-200 text-gray-600 text-xs font-bold px-2 py-1 rounded-full">GRATUIT</span>
@@ -205,7 +216,7 @@ export default function Profil() {
           <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
             <div className="flex items-center gap-2 mb-3">
               <span className="bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-full">⭐ PRO</span>
-              <span className="text-blue-700 font-semibold text-sm">9€/mois</span>
+              <span className="text-blue-700 font-semibold text-sm">8.99€/mois</span>
             </div>
             <ul className="space-y-1.5 text-xs text-blue-700">
               <li>✓ Factures illimitées</li>
@@ -218,13 +229,7 @@ export default function Profil() {
             </ul>
           </div>
         </div>
-        <div className="mt-2 flex justify-center">
-          <button onClick={passerAuPro} disabled={checkoutLoading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold px-8 py-3 rounded-xl text-sm transition-colors">
-            {checkoutLoading ? 'Chargement...' : '🚀 Passer au Pro — 9€/mois'}
-          </button>
-        </div>
-        <p className="text-center text-xs text-gray-400 mt-2">Sans engagement · Annulable à tout moment</p>
+        <BoutonsPro />
       </>
     )
   }
@@ -236,7 +241,6 @@ export default function Profil() {
       <div className="max-w-3xl mx-auto px-4 py-6">
         <h2 className="text-xl font-semibold text-gray-700 mb-6">Mon profil</h2>
 
-        {/* Infos personnelles */}
         <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">Informations du compte</h3>
           <div className="flex items-center gap-4 mb-6">
@@ -311,7 +315,6 @@ export default function Profil() {
           </div>
         </div>
 
-        {/* Sécurité */}
         <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-5">Sécurité du compte</h3>
 
@@ -350,7 +353,6 @@ export default function Profil() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-2xl shadow p-4 flex md:flex-col items-center justify-between md:justify-center md:text-center">
             <p className="text-gray-500 text-sm md:mb-1">Factures créées</p>
@@ -366,13 +368,11 @@ export default function Profil() {
           </div>
         </div>
 
-        {/* Abonnement */}
         <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-6">
           <h3 className="text-lg font-semibold text-gray-700 mb-4">Mon abonnement</h3>
           {renderAbonnement()}
         </div>
 
-        {/* Zone danger */}
         <div className="bg-white rounded-2xl shadow p-4 md:p-6 border border-red-100">
           <h3 className="text-lg font-semibold text-red-600 mb-4">Zone de danger</h3>
           <button
