@@ -215,10 +215,12 @@ const { error: profilError } = await supabase.from('profils').upsert([{
 
       {/* Prix */}
       <div className="bg-blue-50 py-16">
-        <div className="max-w-3xl mx-auto px-6 text-center">
+        <div className="max-w-4xl mx-auto px-6 text-center">
           <h3 className="text-3xl font-bold text-gray-900 mb-4">Un prix simple et transparent</h3>
           <p className="text-gray-500 mb-10">Commencez gratuitement, passez au Pro quand vous êtes prêt.</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+            {/* Gratuit */}
             <div className="bg-white rounded-2xl shadow p-8 text-left">
               <p className="text-gray-500 text-sm font-medium mb-2">GRATUIT</p>
               <p className="text-5xl font-bold text-gray-900 mb-1">0€</p>
@@ -230,18 +232,21 @@ const { error: profilError } = await supabase.from('profils').upsert([{
                 <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Calculateur cotisations</li>
                 <li className="flex items-center gap-2 text-gray-400 line-through">Export PDF illimité</li>
                 <li className="flex items-center gap-2 text-gray-400 line-through">Notes de frais</li>
+                <li className="flex items-center gap-2 text-gray-400 line-through">Agenda + Relances</li>
               </ul>
               <button onClick={() => { setShowAuth(true); setIsSignUp(true) }}
                 className="w-full border border-blue-600 text-blue-600 hover:bg-blue-50 py-3 rounded-xl font-semibold">
                 Commencer gratuitement
               </button>
             </div>
+
+            {/* Pro Mensuel */}
             <div className="bg-blue-600 rounded-2xl shadow p-8 text-left relative">
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
                 ⭐ RECOMMANDÉ
               </div>
-              <p className="text-blue-200 text-sm font-medium mb-2">PRO</p>
-              <p className="text-5xl font-bold text-white mb-1">9€</p>
+              <p className="text-blue-200 text-sm font-medium mb-2">PRO MENSUEL</p>
+              <p className="text-5xl font-bold text-white mb-1">8.99€</p>
               <p className="text-blue-200 text-sm mb-6">par mois · sans engagement</p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center gap-2 text-white"><span className="text-green-300">✓</span> Factures illimitées</li>
@@ -254,10 +259,39 @@ const { error: profilError } = await supabase.from('profils').upsert([{
               </ul>
               <button onClick={() => { setShowAuth(true); setIsSignUp(true) }}
                 className="w-full bg-white text-blue-600 hover:bg-blue-50 py-3 rounded-xl font-semibold">
-                Essayer gratuitement
+                Essayer gratuitement 14 jours
               </button>
             </div>
+
+            {/* Pro Annuel */}
+            <div className="bg-white rounded-2xl shadow p-8 text-left relative border-2 border-green-400">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-400 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+                💰 ECONOMISEZ 47%
+              </div>
+              <p className="text-gray-500 text-sm font-medium mb-2">PRO ANNUEL</p>
+              <div className="flex items-end gap-2 mb-1">
+                <p className="text-5xl font-bold text-gray-900">4.99€</p>
+                <p className="text-gray-400 text-sm mb-2">/mois</p>
+              </div>
+              <p className="text-gray-400 text-sm mb-1">soit 59.99€ / an</p>
+              <p className="text-green-500 text-xs font-semibold mb-6">Economisez 47.89€ vs mensuel</p>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Factures illimitées</li>
+                <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Devis illimités</li>
+                <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Clients illimités</li>
+                <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Export PDF + Excel</li>
+                <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Notes de frais</li>
+                <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Agenda + Relances auto</li>
+                <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Support prioritaire</li>
+              </ul>
+              <button onClick={() => { setShowAuth(true); setIsSignUp(true) }}
+                className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold">
+                Essayer gratuitement 14 jours
+              </button>
+            </div>
+
           </div>
+          <p className="text-gray-400 text-sm mt-8">Essai Pro gratuit 14 jours inclus · Pas de carte bancaire requise</p>
         </div>
       </div>
 
