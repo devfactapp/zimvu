@@ -266,15 +266,15 @@ const { error: profilError } = await supabase.from('profils').upsert([{
             {/* Pro Annuel */}
             <div className="bg-white rounded-2xl shadow p-8 text-left relative border-2 border-green-400">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-400 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
-                💰 ECONOMISEZ 47%
+                💰 ECONOMISEZ 33%
               </div>
               <p className="text-gray-500 text-sm font-medium mb-2">PRO ANNUEL</p>
               <div className="flex items-end gap-2 mb-1">
-                <p className="text-5xl font-bold text-gray-900">4.99€</p>
+               <p className="text-5xl font-bold text-gray-900">5.99€</p>
                 <p className="text-gray-400 text-sm mb-2">/mois</p>
               </div>
-              <p className="text-gray-400 text-sm mb-1">soit 59.99€ / an</p>
-              <p className="text-green-500 text-xs font-semibold mb-6">Economisez 47.89€ vs mensuel</p>
+              <p className="text-gray-400 text-sm mb-1">soit 71.88€ / an</p>
+              <p className="text-green-500 text-xs font-semibold mb-6">Economisez 35.88€ vs mensuel</p>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Factures illimitées</li>
                 <li className="flex items-center gap-2 text-gray-600"><span className="text-green-500">✓</span> Devis illimités</li>
