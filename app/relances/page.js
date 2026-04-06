@@ -11,22 +11,34 @@ export default function Relances() {
   const [envoi, setEnvoi] = useState(false)
   const [resultat, setResultat] = useState(null)
   const [user, setUser] = useState(null)
+  const [session, setSession] = useState(null)
+  const [confirmation, setConfirmation] = useState(false)
+  const [erreurFetch, setErreurFetch] = useState(null)
 
   const fetchFactures = useCallback(async () => {
+    setErreurFetch(null)
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { router.push('/'); return }
     setUser(session.user)
+    setSession(session)
 
     const dateLimite = new Date()
     dateLimite.setDate(dateLimite.getDate() - 7)
     const dateLimiteStr = dateLimite.toISOString().split('T')[0]
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('factures')
-      .select('*')
+      .select('id, client, email, montant, date, numero, description, relance_envoyee, statut')
+      .eq('user_id', session.user.id)
       .eq('statut', 'En attente')
       .lte('date', dateLimiteStr)
       .order('date')
+
+    if (error) {
+      setErreurFetch('Impossible de charger les factures. Veuillez réessayer.')
+      setLoading(false)
+      return
+    }
 
     setFactures(data || [])
     setLoading(false)
@@ -37,14 +49,17 @@ export default function Relances() {
   }, [fetchFactures])
 
   const lancerRelances = async () => {
+    setConfirmation(false)
     setEnvoi(true)
     setResultat(null)
 
     try {
       const response = await fetch('/api/relances', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
       })
       const data = await response.json()
       setResultat(data)
@@ -57,8 +72,15 @@ export default function Relances() {
 
   const joursRetard = (date) => {
     const diff = new Date() - new Date(date)
-    return Math.floor(diff / (1000 * 60 * 60 * 24))
+    return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)))
   }
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('fr-FR')
+  }
+
+  const facturesEligibles = factures.filter(f => f.email && !f.relance_envoyee)
+  const montantTotal = factures.reduce((sum, f) => sum + Number(f.montant), 0)
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -70,9 +92,16 @@ export default function Relances() {
         {/* Explication */}
         <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6">
           <p className="text-blue-700 text-sm">
-            📧 Les relances sont envoyées automatiquement aux clients dont la facture est en attente depuis plus de <strong>7 jours</strong>. Seules les factures avec un email client sont relancées.
+            📧 Les relances sont envoyées automatiquement aux clients dont la facture est en attente depuis plus de <strong>7 jours</strong>. Seules les factures avec un email client et non encore relancées sont incluses.
           </p>
         </div>
+
+        {/* Erreur fetch */}
+        {erreurFetch && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6">
+            <p className="text-red-700 text-sm font-medium">{erreurFetch}</p>
+          </div>
+        )}
 
         {/* Résultat envoi */}
         {resultat && (
@@ -97,13 +126,13 @@ export default function Relances() {
             <p className="text-3xl font-bold text-red-500">{factures.length}</p>
           </div>
           <div className="bg-white rounded-2xl shadow p-4 text-center">
-            <p className="text-gray-500 text-sm mb-1">Avec email client</p>
-            <p className="text-3xl font-bold text-blue-700">{factures.filter(f => f.email).length}</p>
+            <p className="text-gray-500 text-sm mb-1">Relances à envoyer</p>
+            <p className="text-3xl font-bold text-blue-700">{facturesEligibles.length}</p>
           </div>
           <div className="bg-white rounded-2xl shadow p-4 text-center">
             <p className="text-gray-500 text-sm mb-1">Montant total en attente</p>
             <p className="text-3xl font-bold text-orange-500">
-              {factures.reduce((sum, f) => sum + Number(f.montant), 0).toFixed(0)} €
+              {montantTotal.toFixed(2)} €
             </p>
           </div>
         </div>
@@ -112,16 +141,34 @@ export default function Relances() {
         <div className="bg-white rounded-2xl shadow p-4 md:p-6 mb-6">
           <h3 className="text-sm font-semibold text-gray-600 mb-3">Lancer les relances</h3>
           <p className="text-gray-500 text-sm mb-4">
-            {factures.filter(f => f.email).length === 0
+            {facturesEligibles.length === 0
               ? 'Aucune facture éligible pour le moment.'
-              : `${factures.filter(f => f.email).length} relance(s) seront envoyées.`}
+              : `${facturesEligibles.length} relance(s) seront envoyées par email.`}
           </p>
-          <button
-            onClick={lancerRelances}
-            disabled={envoi || factures.filter(f => f.email).length === 0}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold px-6 py-3 rounded-xl text-sm">
-            {envoi ? '⏳ Envoi en cours...' : '📧 Envoyer les relances'}
-          </button>
+
+          {!confirmation ? (
+            <button
+              onClick={() => setConfirmation(true)}
+              disabled={envoi || facturesEligibles.length === 0}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-semibold px-6 py-3 rounded-xl text-sm">
+              📧 Envoyer les relances
+            </button>
+          ) : (
+            <div className="flex items-center gap-3">
+              <p className="text-sm text-gray-600">Confirmer l'envoi de {facturesEligibles.length} email(s) ?</p>
+              <button
+                onClick={lancerRelances}
+                disabled={envoi}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-xl text-sm">
+                {envoi ? '⏳ Envoi...' : '✅ Confirmer'}
+              </button>
+              <button
+                onClick={() => setConfirmation(false)}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-600 font-semibold px-4 py-2 rounded-xl text-sm">
+                Annuler
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Liste factures en retard */}
@@ -147,7 +194,7 @@ export default function Relances() {
                   <div>
                     <p className="font-semibold text-gray-800">{f.client}</p>
                     <p className="text-gray-500 text-sm">{f.description}</p>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-xs text-red-500 font-medium">
                         {joursRetard(f.date)} jours de retard
                       </span>
@@ -162,8 +209,8 @@ export default function Relances() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-blue-700">{f.montant} €</p>
-                    <p className="text-gray-400 text-xs">{f.date}</p>
+                    <p className="font-bold text-blue-700">{Number(f.montant).toFixed(2)} €</p>
+                    <p className="text-gray-400 text-xs">{formatDate(f.date)}</p>
                   </div>
                 </div>
               ))}
