@@ -14,11 +14,23 @@ export default function CGV() {
           </div>
 
           <div>
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">2. Prix et abonnement</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-3">2. Prix et abonnements</h2>
+            <p className="text-gray-600 mb-3">
+              Zimvu propose deux formules d'abonnement Pro :
+            </p>
+            <ul className="text-gray-600 space-y-2 mb-3">
+              <li className="flex items-start gap-2">
+                <span className="text-blue-600 font-bold mt-0.5">•</span>
+                <span><strong>Plan Pro Mensuel : 8,99€ TTC par mois</strong>, sans engagement, résiliable à tout moment.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-600 font-bold mt-0.5">•</span>
+                <span><strong>Plan Pro Annuel : 71,88€ TTC par an</strong> (soit 5,99€/mois), facturé en une seule fois pour une durée de 12 mois.</span>
+              </li>
+            </ul>
             <p className="text-gray-600">
-              Zimvu propose un abonnement mensuel au tarif de <strong>9€ TTC par mois</strong>.
-              L'abonnement est sans engagement et peut être résilié à tout moment.
               Le paiement est effectué via Stripe, plateforme sécurisée de paiement en ligne.
+              Un plan Gratuit est également disponible sans frais avec des fonctionnalités limitées.
             </p>
           </div>
 
@@ -44,15 +56,18 @@ export default function CGV() {
             <p className="text-gray-600">
               Conformément à la loi, vous disposez d'un délai de <strong>14 jours</strong> à compter
               de votre inscription pour exercer votre droit de rétractation et obtenir un remboursement complet.
+              Pour le plan annuel, le remboursement est intégral si la demande intervient dans ce délai.
             </p>
           </div>
 
           <div>
             <h2 className="text-xl font-semibold text-gray-800 mb-3">6. Résiliation</h2>
             <p className="text-gray-600">
-              L'abonnement peut être résilié à tout moment depuis votre espace profil.
-              La résiliation prend effet à la fin de la période en cours.
-              Aucun remboursement partiel ne sera effectué.
+              Le plan mensuel peut être résilié à tout moment depuis votre espace profil.
+              La résiliation prend effet à la fin de la période mensuelle en cours.
+              Le plan annuel est souscrit pour une durée de 12 mois et n'est pas remboursable
+              au-delà du délai légal de rétractation de 14 jours.
+              Aucun remboursement partiel ne sera effectué après ce délai.
             </p>
           </div>
 
